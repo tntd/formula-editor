@@ -1,0 +1,73 @@
+:global{
+    .m-codemirror{
+        position: relative;
+        overflow: hidden;
+        border: #d7d7d7 solid 1px;
+        .codemirror-tip-day, .codemirror-tip-night{
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 999;
+            background: #fff;
+            width: 200px;
+            box-shadow: rgba(119, 119, 119, 0.2) 0px 0px 7px, rgba(0, 0, 0, 0) 1px 1px 0px inset, rgba(0, 0, 0, 0) -1px -1px 0px inset;
+            font-size: 12px;
+            ul{
+                margin: 0;
+                padding: 0;
+                max-height: 226px;
+                overflow: auto;
+                li{
+                    list-style: none;
+                    padding: 5px 10px;
+                    cursor: pointer;
+                    &:hover{
+                        background: #63acff;
+                        color: #fff;
+                    }
+                }
+                .cm-active{
+                    background: #63acff;
+                    color: #fff;
+                }
+            }
+        }
+        // 重置codemirror主题颜色
+        .cm-s-3024-day{
+            span.cm-field-keyword{
+                color: #FF9800;
+            }
+            span.cm-function-keyword{
+                color: #03A9F4;
+            }
+            span.cm-nomal-keyword{
+                color: #F44336;
+                border-bottom: #F44336 1px dotted;
+            }
+            span.cm-boolean-keyword{
+                color: #673AB7;
+            }
+            span.cm-string {
+                color: #cdab53;
+            }
+            span.cm-comment {
+                color: #9E9E9E;
+            }
+        }
+        .cm-s-material{
+            span.cm-field-keyword{
+                color: #FF9800;
+            }
+            span.cm-function-keyword{
+                color: #03A9F4;
+            }
+            span.cm-nomal-keyword{
+                color: #F44336;
+                border-bottom: #F44336 1px dotted;
+            }
+            span.cm-boolean-keyword{
+                color: #7689f3;
+            }
+        }
+    }
+}
