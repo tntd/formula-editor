@@ -64,7 +64,7 @@ export default class FormulaEdit extends PureComponent {
 	}
 
 	componentDidMount() {
-		const { defaultValue = "", readOnly = false, theme = "night", lineNumber = true, height = 300 } = this.props;
+		const { defaultValue = "", readOnly = false, theme = "night", lineNumber = true, height = 300, ...rest } = this.props;
 		const { current } = this.ref;
 
 		this.setLocalStorage();
@@ -76,7 +76,9 @@ export default class FormulaEdit extends PureComponent {
 			mode: "defineScript",
 			theme: turnTheme,
 			lineNumbers: lineNumber,
-			readOnly: readOnly ? "nocursor" : false
+			lineWrapping: true,
+			readOnly: readOnly ? "nocursor" : false,
+			...rest
 		});
 		this.CodeMirrorEditor.setValue(defaultValue);
 		this.CodeMirrorEditor.setSize("auto", height);
@@ -87,13 +89,46 @@ export default class FormulaEdit extends PureComponent {
 			if (this.props.onChange) {
 				const { fieldList, methodList, normalList } = this.state;
 				const errorkeyword = document.body.querySelector(".cm-nomal-keyword");
+				let keywords = [];
+				let code = cm.getValue();
+				fieldList.forEach(item => {
+					const str = `@${item.name}`;
+					keywords.push(str);
+				});
+				methodList.forEach(item => {
+					const str = `#${item.name}`;
+					keywords.push(str);
+				});
+				normalList.forEach(item => {
+					keywords.push(item.name);
+				});
+				// 正则替换关键词
+				let newCode = code.replace(
+					new RegExp(`(${keywords.join("|")})`, "g"),
+					function (match) {
+						let turnStr = match;
+						fieldList.forEach(item => {
+							const str = `@${item.name}`;
+							if (str === match) turnStr = `@${item.value}`;
+						});
+						methodList.forEach(item => {
+							const str = `#${item.name}`;
+							if (str === match) turnStr = `#${item.realValue}`;
+						});
+						normalList.forEach(item => {
+							if (match === item.name) turnStr = item.value;
+						});
+						return turnStr;
+					}
+				);
 				const data = {
+					newCode,
 					fieldList,
 					methodList,
 					normalList,
 					errorMsg: errorkeyword ? "存在错误代码" : null
 				};
-				this.props.onChange(cm.getValue(), data);
+				this.props.onChange(code, data);
 			}
 		});
 		this.CodeMirrorEditor.on("focus", (cm) => {
@@ -247,7 +282,7 @@ export default class FormulaEdit extends PureComponent {
 		this.setState({
 			dropList: list
 		});
-		this.defaultFirst();
+		this.defaultFirst(val, list);
 	}
 
 	handleClick(item, type) {
@@ -311,7 +346,7 @@ export default class FormulaEdit extends PureComponent {
 		document.querySelector(`.${active}`).scrollIntoViewIfNeeded();
 	}
 
-	defaultFirst = () => {
+	defaultFirst = (val, list) => {
 		let findLi = "cm-field-li";
 		let active = "cm-active";
 		const nodeList = document.querySelectorAll(`.${findLi}`);
@@ -321,14 +356,31 @@ export default class FormulaEdit extends PureComponent {
 			}
 			nodeList[0].className = `${active} ${findLi}`;
 		}
+		if (list && list.length === 1 && list[0].name === val) {
+			this.setState({
+				tipShow: false,
+				tipShowType: null
+			});
+		}
+	}
+
+	// 光标处插入值
+	insertValue = (value) => {
+		const { readOnly = false } = this.props;
+		if (readOnly || !value) return;
+		const getCursor = this.CodeMirrorEditor.getCursor();
+		this.CodeMirrorEditor.replaceSelection(value);
+		this.CodeMirrorEditor.setCursor(getCursor.line, getCursor.ch + value.length);
+		this.CodeMirrorEditor.focus();
 	}
 
 	render() {
 		const { posLeft, posTop, tipShow, dropList } = this.state;
-		const { theme } = this.props;
+		const { theme, children } = this.props;
 
 		return (
 			<div className="m-codemirror">
+				{children}
 				<textarea ref={this.ref}></textarea>
 				{/* @弹框 */}
 				<div
