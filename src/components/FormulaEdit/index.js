@@ -10,7 +10,9 @@ import "./defineScript";
 import "codemirror/lib/codemirror.css";
 import "codemirror/theme/3024-day.css";
 import "codemirror/theme/material.css";
+import "codemirror/addon/display/fullscreen.css";
 import "./index.less";
+import "codemirror/addon/display/fullscreen.js";
 
 export default class FormulaEdit extends PureComponent {
 
@@ -160,6 +162,12 @@ export default class FormulaEdit extends PureComponent {
 				} else {
 					cm.execCommand("newlineAndIndent");
 				}
+			},
+			"Esc": () => {
+				this.exitFullScreen();
+			},
+			"F9": () => {
+				this.fullScreen();
 			}
 		});
 	}
@@ -372,6 +380,18 @@ export default class FormulaEdit extends PureComponent {
 		this.CodeMirrorEditor.replaceSelection(value);
 		this.CodeMirrorEditor.setCursor(getCursor.line, getCursor.ch + value.length);
 		this.CodeMirrorEditor.focus();
+	}
+
+	// 全屏
+	fullScreen = () => {
+		this.CodeMirrorEditor.setOption("fullScreen", !this.CodeMirrorEditor.getOption("fullScreen"));
+	}
+
+	// 退出全屏
+	exitFullScreen = () => {
+		if (this.CodeMirrorEditor.getOption("fullScreen")) {
+			this.CodeMirrorEditor.setOption("fullScreen", false);
+		}
 	}
 
 	render() {

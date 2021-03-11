@@ -71,5 +71,12 @@ normalList: [
 | normalList | array   |  无      |   非必填  | 自定义关键词列表       |
 | onChange  | function(code, obj)|  无      |   非必填    | 返回code, obj      |
 
+## 支持ref对外暴露方法
+|    方法    | 类型    | 说明         |
+| :------:  | :-----: | :----------: |
+| fullScreen() | function  | 全屏     |
+| exitFullScreen() | function  | 退出全屏     |
+| insertValue(value) | function  | 光标处插入值     |
+
 ## License
 MIT
