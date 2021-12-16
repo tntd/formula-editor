@@ -1,6 +1,6 @@
 {
   "name": "@tntd/formula-edit",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "react计算公式编辑器",
   "keywords": [
     "formula",
@@ -15,6 +15,10 @@
     "build": "webpack --env.NODE_ENV=production",
     "dev": "PORT=8822 webpack-dev-server --inline --progress --config webpack.config.js",
     "publish": "sh ./publish.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:tntd/formula-editor.git"
   },
   "author": "bo.liu@tongdun.cn",
   "license": "MIT",

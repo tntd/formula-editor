@@ -1,1 +1,1 @@
-npm config set registry http://registry.npmjs.org && npm publish --access public
+npm config set registry https://registry.npmjs.org && npm publish --access public

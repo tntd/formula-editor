@@ -24,8 +24,8 @@ const FormulaEdit = props => {
 		lineNumber = true,
 		height = 300,
 		fieldList = [],
-		methodList = [],
-		normalList = [],
+		methodList,
+		normalList,
 		editorEvent,
 		 ...rest
 	} = props;
@@ -141,7 +141,7 @@ const FormulaEdit = props => {
 	}
 
 	useEffect(() => {
-		if (codeMirrorEditor.current) {
+		if (codeMirrorEditor.current && fieldList.length) {
 			setLocalStorage();
 			let codeValue = codeMirrorEditor.current.getValue();
 			codeValue = EnCodeToCn(codeValue);
@@ -196,17 +196,17 @@ const FormulaEdit = props => {
 	const setLocalStorage = () => {
 		// 字段存本地，供分词高亮使用
 		localStorage.codemirrorFieldList = getLoacalList(fieldList, "@");
-		localStorage.codemirrorMethodList = getLoacalList(methodList, "#");
-		localStorage.codemirrorNormalList = getLoacalList(normalList, "");
-		const mArr = methodList.map(item => `#${item.name}`);
-		const nArr = normalList.map(item => item.name);
+		localStorage.codemirrorMethodList = getLoacalList(methodList || [], "#");
+		localStorage.codemirrorNormalList = getLoacalList(normalList || [], "");
+		const mArr = (methodList || []).map(item => `#${item.name}`);
+		const nArr = (normalList || []).map(item => item.name);
 		const keywords = [...mArr, ...nArr].join("|");
 		regExpRef.current = new RegExp(`(${keywords})`, "g");
 	};
 
 	const CnCodeToEn = (cnCode) => {
 		let enCode = cnCode.replace(
-			/@[^\+\*\/#%\),\-=@或且]*/g,
+			/@[^\+\*\/#%\),;\-=@或且]*/g,
 			(match) => {
 				let turnStr = match.replace(/^\s*|\s*$/g, "");
 				const fItem = fieldList.find(item => `@${item.name}` === turnStr);
@@ -218,9 +218,9 @@ const FormulaEdit = props => {
 			regExpRef.current,
 			(match) => {
 				let turnStr = match;
-				const mItem = methodList.find(item => `#${item.name}` === match);
+				const mItem = (methodList || []).find(item => `#${item.name}` === match);
 				if (mItem) turnStr = `#${mItem.realValue}`;
-				const nItem = normalList.find(item => item.name === match);
+				const nItem = (normalList || []).find(item => item.name === match);
 				if (nItem) turnStr = nItem.value;
 				return turnStr;
 			}
@@ -230,8 +230,8 @@ const FormulaEdit = props => {
 
 	const EnCodeToCn = (enCode) => {
 		const fValueArr = fieldList.map(item => `@${item.value}`);
-		const mValueArr = methodList.map(item => `#${item.realValue}`);
-		const nValueArr = normalList.map(item => item.value);
+		const mValueArr = (methodList || []).map(item => `#${item.realValue}`);
+		const nValueArr = (normalList || []).map(item => item.value);
 		const keywords = [...fValueArr, ...mValueArr, ...nValueArr].join("|");
 		const regExp = new RegExp(`(${keywords})`, "g");
 		let cnCode = enCode.replace(
@@ -240,9 +240,9 @@ const FormulaEdit = props => {
 				let turnStr = match;
 				const fItem = fieldList.find(item => `@${item.value}` === match);
 				if (fItem) turnStr = `@${fItem.name}`;
-				const mItem = methodList.find(item => `#${item.realValue}` === match);
+				const mItem = (methodList || []).find(item => `#${item.realValue}` === match);
 				if (mItem) turnStr = `#${mItem.name}`;
-				const nItem = normalList.find(item => item.value === match);
+				const nItem = (normalList || []).find(item => item.value === match);
 				if (nItem) turnStr = nItem.name;
 				return turnStr;
 			}
@@ -280,7 +280,7 @@ const FormulaEdit = props => {
 				});
 			}
 		}
-		if (methodList.length > 0 && lastIndex2 !== -1 && lastIndex2 > lastIndex) { // 监测#
+		if (methodList && methodList.length > 0 && lastIndex2 !== -1 && lastIndex2 > lastIndex) { // 监测#
 			const content = cursorBeforeOneChar.substring(lastIndex2 + 1, getCursor.ch);
 			const findObj = methodList.find(item => item.name.includes(content));
 			if (findObj) {
@@ -311,7 +311,7 @@ const FormulaEdit = props => {
 
 	const search = (val, type) => {
 		let list = [];
-		const searchList = type === "@" ? fieldList : methodList;
+		const searchList = type === "@" ? fieldList : (methodList || []);
 		searchList.forEach((item) => {
 			if (item.name.includes(val)) {
 				list.push(item);
