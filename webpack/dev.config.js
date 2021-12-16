@@ -27,7 +27,9 @@ module.exports = {
 		]
 	},
 	devServer: {
-		contentBase: './dist'
+		contentBase: './dist',
+		open: true,
+		port: 8081
 	},
 	plugins: [
 		new htmlWebpackPlugin({

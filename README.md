@@ -15,15 +15,16 @@ npm install --save-dev @tntd/formula-edit
 
 ```
 <FormulaEdit
-    theme="day" // 主题
-    height={200} // 高度
-    defaultValue={defaultCode} // 初始化值
-    fieldList={fieldList} // @唤起
+    value='@hahahdsdhjbewdbu1#avg(,)andhhhhhhh' //传入组件自动转化成cnCode
+    fieldList={testData} // @唤起
     methodList={methodList} // #唤起
     normalList={normalList} // 自定义无需校验关键词
-    readOnly={false} // 是否只读
-    lineNumber={true} // 是否显示列数
-    onChange={getCode} // 回调
+    onChange={(enCode,data)=>{}} // 回调
+    // defaultValue={defaultCode} // 初始化值 已去除该属性
+    // readOnly={false} // 是否只读 默认false
+    // lineNumber={true} // 是否显示列数 默认true
+    // theme="night" // 主题 默认night
+    // height={300} // 高度 默认300
 />
 ```
 
@@ -61,7 +62,8 @@ normalList: [
 ## props参数：
 |    参数    | 类型    |  默认值   |  是否必填  | 说明         |
 | :------:  | :-----: | :----:   | :------: | :----------: |
-| defaultValue | string  |  无      |   非必填    | 初始化赋值     |
+| defaultValue | string  |  无      |   非必填    | 初始化赋值  2.0已废弃   |
+| value | string  |  无      |   非必填    | 赋值  传入组件自动转化成cnCode |
 | height    | number  |  300     |   非必填  | 高度设置       |
 | theme    | string  |  day     |   非必填  | 主题: 目前只支持两种：day，night |
 | readOnly  | boolean |  false   |   非必填  | 设置只读       |
@@ -69,7 +71,7 @@ normalList: [
 | fieldList | array   |  无      |   非必填  | 字段列表       |
 | methodList | array   |  无      |   非必填  | 方法列表       |
 | normalList | array   |  无      |   非必填  | 自定义关键词列表       |
-| onChange  | function(code, obj)|  无      |   非必填    | 返回code, obj      |
+| onChange  | function(enCode, obj)|  无      |   非必填    | enCode, obj(里面有cnCode)      |
 
 ## 支持ref对外暴露方法
 |    方法    | 类型    | 说明         |

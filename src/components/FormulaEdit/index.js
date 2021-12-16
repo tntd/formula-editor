@@ -4,7 +4,7 @@
  * @Describe: 计算公式编辑器组件
  */
 
-import React, { PureComponent } from "react";
+import React, { useEffect, useState, useRef, forwardRef } from "react";
 import * as CodeMirror from "codemirror/lib/codemirror";
 import "./defineScript";
 import "codemirror/lib/codemirror.css";
@@ -13,35 +13,167 @@ import "codemirror/theme/material.css";
 import "codemirror/addon/display/fullscreen.css";
 import "./index.less";
 import "codemirror/addon/display/fullscreen.js";
+import ScrollContainer from './ScrollContainer';
 
-export default class FormulaEdit extends PureComponent {
+const FormulaEdit = props => {
+	const {
+		children,
+		value = "",
+		readOnly = false,
+		theme = "night",
+		lineNumber = true,
+		height = 300,
+		fieldList = [],
+		methodList = [],
+		normalList = [],
+		editorEvent,
+		 ...rest
+	} = props;
 
-	state = {
+	const [curState, setCurState] = useState({
 		posLeft: 0,
 		posTop: 0,
 		tipShow: false,
-		tipShowType: null, // @, #
-		dropList: [],
-		blurFlag: false,
-		fieldList: [],
-		methodList: [],
-		normalList: []
-	};
+		tipShowType: null,
+		blurFlag: false
+	});
+	const [dropList, setDropList] = useState([]);
+	const codeMirrorEditor = useRef();
+	const textareaRef = useRef();
+	const regExpRef = useRef('');
 
-	constructor(props) {
-		super(props);
-		this.ref = React.createRef();
+	const { posLeft, posTop, tipShowType, tipShow } = curState;
+
+	// 全屏
+	const fullScreen = () => {
+		codeMirrorEditor.current.setOption("fullScreen", !codeMirrorEditor.current.getOption("fullScreen"));
+		codeMirrorEditor.current.focus();
 	}
 
-	setLocalStorage = () => {
-		const { fieldList = [], methodList = [], normalList = [] } = this.props;
-		// 字段存本地，供分词高亮使用
-		localStorage.codemirrorFieldList = this.getLoacalList(fieldList, "@");
-		localStorage.codemirrorMethodList = this.getLoacalList(methodList, "#");
-		localStorage.codemirrorNormalList = this.getLoacalList(normalList, "");
+	// 退出全屏
+	const exitFullScreen = () => {
+		if (codeMirrorEditor.current.getOption("fullScreen")) {
+			codeMirrorEditor.current.setOption("fullScreen", false);
+		}
 	}
 
-	getLoacalList = (list, type) => {
+	useEffect(() => {
+		setLocalStorage();
+
+		let turnTheme;
+		if (theme === "night") turnTheme = "material";
+		if (theme === "day") turnTheme = "3024-day";
+
+		if (!codeMirrorEditor.current) {
+			codeMirrorEditor.current = CodeMirror.fromTextArea(textareaRef.current, {
+				mode: "defineScript",
+				theme: turnTheme,
+				lineNumbers: lineNumber,
+				lineWrapping: true,
+				readOnly: readOnly ? "nocursor" : false,
+				...rest
+			});
+		}
+
+		let codeValue = '';
+		if (value) codeValue = EnCodeToCn(value);
+		codeMirrorEditor.current.setValue(codeValue);
+		codeMirrorEditor.current.setSize("auto", height);
+
+		document.body.addEventListener("click", listenner);
+
+		editorEvent && editorEvent({ fullScreen, exitFullScreen })
+
+		return () => {
+			document.body.removeEventListener("click", listenner);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (codeMirrorEditor.current) {
+			codeMirrorEditor.current.addKeyMap({
+				"Up": (cm) => {
+					enterFuc("up", cm);
+				},
+				"Down": (cm) => {
+					enterFuc("down", cm);
+				},
+				"Enter": (cm) => {
+					enterFuc("enter", cm);
+				},
+				"Esc": () => {
+					exitFullScreen();
+				},
+				"F9": () => {
+					fullScreen();
+				}
+			});
+		}
+	}, [tipShow])
+
+	useEffect(() => {
+		if (!readOnly && codeMirrorEditor.current) {
+			let codeValue = EnCodeToCn(value);
+			insertValue(codeValue);
+		}
+	}, [readOnly, value]);
+
+	useEffect(() => {
+		if (codeMirrorEditor.current) {
+			codeMirrorEditor.current.setSize("auto", height);
+		}
+	}, [height]);
+
+	const editorChanges = (cm) => {
+		console.log('object=======editorChanges')
+		if (props.onChange) {
+			const errorkeyword = document.body.querySelector(".cm-nomal-keyword");
+			let cnCode = cm.getValue();
+			// 正则替换关键词
+			let enCode = CnCodeToEn(cnCode);
+			const data = {
+				cnCode,
+				enCode,
+				errorMsg: errorkeyword ? "存在错误代码" : null
+			};
+			props.onChange(enCode, data);
+		}
+	}
+
+	useEffect(() => {
+		if (codeMirrorEditor.current) {
+			setLocalStorage();
+			let codeValue = codeMirrorEditor.current.getValue();
+			codeValue = EnCodeToCn(codeValue);
+			codeMirrorEditor.current.setValue(codeValue);
+			insertValue(codeValue);
+
+			codeMirrorEditor.current.off("changes", editorChanges);
+			codeMirrorEditor.current.on("changes", editorChanges);
+
+			codeMirrorEditor.current.on("cursorActivity", (cm) => {
+				cursorActivity(cm);
+			});
+
+			codeMirrorEditor.current.on("focus", (cm) => {
+				cursorActivity(cm);
+				setCurState({
+					...curState,
+					blurFlag: true
+				});
+			});
+		}
+	}, [fieldList, methodList, normalList]);
+
+	const insertValue = (value) => {
+		if (readOnly || !value) return;
+		const getCursor = codeMirrorEditor.current.getCursor();
+		codeMirrorEditor.current.setCursor(getCursor.line, getCursor.ch + value.length);
+		codeMirrorEditor.current.focus();
+	}
+
+
+	const getLoacalList = (list, type) => {
 		const copyList = Object.assign([], list);
 		// 排序，把长的放前面
 		copyList.sort((a, b) => {
@@ -57,139 +189,213 @@ export default class FormulaEdit extends PureComponent {
 		for (let i = 0; i < copyList.length; i++) {
 			codemirrorList.push(`${type}${copyList[i].name}`);
 		}
-		let obj = {};
-		if (type === "@") obj.fieldList = copyList;
-		if (type === "#") obj.methodList = copyList;
-		if (type === "") obj.normalList = copyList;
-		this.setState({ ...obj });
 		return JSON.stringify(codemirrorList);
-	}
+	};
 
-	componentDidMount() {
-		const { defaultValue = "", readOnly = false, theme = "night", lineNumber = true, height = 300, ...rest } = this.props;
-		const { current } = this.ref;
 
-		this.setLocalStorage();
+	const setLocalStorage = () => {
+		// 字段存本地，供分词高亮使用
+		localStorage.codemirrorFieldList = getLoacalList(fieldList, "@");
+		localStorage.codemirrorMethodList = getLoacalList(methodList, "#");
+		localStorage.codemirrorNormalList = getLoacalList(normalList, "");
+		const mArr = methodList.map(item => `#${item.name}`);
+		const nArr = normalList.map(item => item.name);
+		const keywords = [...mArr, ...nArr].join("|");
+		regExpRef.current = new RegExp(`(${keywords})`, "g");
+	};
 
-		let turnTheme;
-		if (theme === "night") turnTheme = "material";
-		if (theme === "day") turnTheme = "3024-day";
-		this.CodeMirrorEditor = CodeMirror.fromTextArea(current, {
-			mode: "defineScript",
-			theme: turnTheme,
-			lineNumbers: lineNumber,
-			lineWrapping: true,
-			readOnly: readOnly ? "nocursor" : false,
-			...rest
-		});
-		this.CodeMirrorEditor.setValue(defaultValue);
-		this.CodeMirrorEditor.setSize("auto", height);
-		this.CodeMirrorEditor.on("cursorActivity", (cm) => {
-			this.cursorActivity(cm);
-		});
-		this.CodeMirrorEditor.on("changes", (cm) => {
-			if (this.props.onChange) {
-				const { fieldList, methodList, normalList } = this.state;
-				const errorkeyword = document.body.querySelector(".cm-nomal-keyword");
-				let keywords = [];
-				let code = cm.getValue();
-				fieldList.forEach(item => {
-					const str = `@${item.name}`;
-					keywords.push(str);
-				});
-				methodList.forEach(item => {
-					const str = `#${item.name}`;
-					keywords.push(str);
-				});
-				normalList.forEach(item => {
-					keywords.push(item.name);
-				});
-				// 正则替换关键词
-				let newCode = code.replace(
-					new RegExp(`(${keywords.join("|")})`, "g"),
-					function (match) {
-						let turnStr = match;
-						fieldList.forEach(item => {
-							const str = `@${item.name}`;
-							if (str === match) turnStr = `@${item.value}`;
-						});
-						methodList.forEach(item => {
-							const str = `#${item.name}`;
-							if (str === match) turnStr = `#${item.realValue}`;
-						});
-						normalList.forEach(item => {
-							if (match === item.name) turnStr = item.value;
-						});
-						return turnStr;
-					}
-				);
-				const data = {
-					newCode,
-					fieldList,
-					methodList,
-					normalList,
-					errorMsg: errorkeyword ? "存在错误代码" : null
-				};
-				this.props.onChange(code, data);
+	const CnCodeToEn = (cnCode) => {
+		let enCode = cnCode.replace(
+			/@[^\+\*\/#%\),\-=@或且]*/g,
+			(match) => {
+				let turnStr = match.replace(/^\s*|\s*$/g, "");
+				const fItem = fieldList.find(item => `@${item.name}` === turnStr);
+				if (fItem) turnStr = `@${fItem.value}`;
+				return turnStr;
 			}
-		});
-		this.CodeMirrorEditor.on("focus", (cm) => {
-			this.cursorActivity(cm);
-			this.setState({ blurFlag: true });
-		});
-		document.body.addEventListener("click", this.listenner);
-		this.CodeMirrorEditor.addKeyMap({
-			"Up": (cm) => {
-				const { tipShow } = this.state;
-				if (tipShow) {
-					this.enterFuc("up");
-				} else {
-					cm.execCommand("goLineUp");
-				}
-			},
-			"Down": (cm) => {
-				const { tipShow } = this.state;
-				if (tipShow) {
-					this.enterFuc("down");
-				} else {
-					cm.execCommand("goLineDown");
-				}
-			},
-			"Enter": (cm) => {
-				const { tipShow } = this.state;
-				if (tipShow) {
-					this.enterFuc("enter");
-				} else {
-					cm.execCommand("newlineAndIndent");
-				}
-			},
-			"Esc": () => {
-				this.exitFullScreen();
-			},
-			"F9": () => {
-				this.fullScreen();
+		);
+		enCode = enCode.replace(
+			regExpRef.current,
+			(match) => {
+				let turnStr = match;
+				const mItem = methodList.find(item => `#${item.name}` === match);
+				if (mItem) turnStr = `#${mItem.realValue}`;
+				const nItem = normalList.find(item => item.name === match);
+				if (nItem) turnStr = nItem.value;
+				return turnStr;
 			}
-		});
-	}
+		);
+		return enCode;
+	};
 
-	componentDidUpdate(prevProps) {
-		const code = prevProps.defaultValue;
-		const nextCode = this.props.defaultValue;
-		if (code !== nextCode) {
-			this.CodeMirrorEditor.setValue(nextCode);
+	const EnCodeToCn = (enCode) => {
+		const fValueArr = fieldList.map(item => `@${item.value}`);
+		const mValueArr = methodList.map(item => `#${item.realValue}`);
+		const nValueArr = normalList.map(item => item.value);
+		const keywords = [...fValueArr, ...mValueArr, ...nValueArr].join("|");
+		const regExp = new RegExp(`(${keywords})`, "g");
+		let cnCode = enCode.replace(
+			regExp,
+			(match) => {
+				let turnStr = match;
+				const fItem = fieldList.find(item => `@${item.value}` === match);
+				if (fItem) turnStr = `@${fItem.name}`;
+				const mItem = methodList.find(item => `#${item.realValue}` === match);
+				if (mItem) turnStr = `#${mItem.name}`;
+				const nItem = normalList.find(item => item.value === match);
+				if (nItem) turnStr = nItem.name;
+				return turnStr;
+			}
+		);
+		return cnCode;
+	};
+
+	const cursorActivity = (cm) => {
+		if (readOnly) return;
+
+		const getCursor = cm.getCursor();
+		const pos = cm.cursorCoords(getCursor);
+		const getLineInfo = cm.getLine(getCursor.line);
+		const cursorBeforeOneChar = getLineInfo.substring(0, getCursor.ch);
+		const lastIndex = cursorBeforeOneChar.lastIndexOf("@", getCursor.ch);
+		const lastIndex2 = cursorBeforeOneChar.lastIndexOf("#", getCursor.ch);
+		if (fieldList.length > 0 && lastIndex !== -1 && lastIndex > lastIndex2) { // 监测@
+			const content = cursorBeforeOneChar.substring(lastIndex + 1, getCursor.ch);
+			const findObj = fieldList.find(item => item.name.includes(content));
+			if (findObj) {
+				const temp = {
+					...curState,
+					posLeft: pos.left,
+					posTop: pos.top + 20,
+					tipShow: true,
+					tipShowType: "@"
+				}
+				setCurState(temp);
+				search(content, "@");
+			} else {
+				setCurState({
+					...curState,
+					tipShow: false,
+					tipShowType: null
+				});
+			}
 		}
-		const preHeight = prevProps.height;
-		const nextHeight = this.props.height;
-		if (preHeight !== nextHeight && nextHeight) {
-			this.CodeMirrorEditor.setSize("auto", nextHeight);
+		if (methodList.length > 0 && lastIndex2 !== -1 && lastIndex2 > lastIndex) { // 监测#
+			const content = cursorBeforeOneChar.substring(lastIndex2 + 1, getCursor.ch);
+			const findObj = methodList.find(item => item.name.includes(content));
+			if (findObj) {
+				setCurState({
+					...curState,
+					posLeft: pos.left,
+					posTop: pos.top + 20,
+					tipShow: true,
+					tipShowType: "#"
+				});
+				search(content, "#");
+			} else {
+				setCurState({
+					...curState,
+					tipShow: false,
+					tipShowType: null
+				});
+			}
+		}
+		if (!cursorBeforeOneChar.includes("@") && !cursorBeforeOneChar.includes("#")) {
+			setCurState({
+				...curState,
+				tipShow: false,
+				tipShowType: null
+			});
 		}
 	}
 
-	componentWillUnmount() {
-		document.body.removeEventListener("click", this.listenner);
+	const search = (val, type) => {
+		let list = [];
+		const searchList = type === "@" ? fieldList : methodList;
+		searchList.forEach((item) => {
+			if (item.name.includes(val)) {
+				list.push(item);
+			}
+		});
+		setDropList(list);
+	};
+
+	const handleClick = (item, type) => {
+		const getCursor = codeMirrorEditor.current.getCursor();
+		const getLineInfo = codeMirrorEditor.current.getLine(getCursor.line);
+		const cursorBeforeOneChar = getLineInfo.substring(0, getCursor.ch);
+		const lastIndex = cursorBeforeOneChar.lastIndexOf(type, getCursor.ch);
+		codeMirrorEditor.current.setSelection(
+			{ line: getCursor.line, ch: lastIndex + 1 },
+			{ line: getCursor.line, ch: getCursor.ch },
+		);
+		let content = type === "@" ? item.name : item.value;
+		codeMirrorEditor.current.replaceSelection(content);
+		codeMirrorEditor.current.setCursor(getCursor.line, lastIndex + 1 + content.length);
+		codeMirrorEditor.current.focus();
+		setCurState({
+			...curState,
+			tipShow: false,
+			tipShowType: null
+		});
 	}
 
-	listenner = (e) => {
+	const enterFuc = (type, cm) => {
+		if (!tipShow) {
+			if (type === "up") {
+				cm.execCommand("goLineUp");
+			} else if (type === "down") {
+				cm.execCommand("goLineDown");
+			} else if (type === "enter") {
+				cm.execCommand("newlineAndIndent");
+			};
+			return false;
+		}
+		let findLi = "cm-field-li";
+		let active = "cm-active";
+		const nodeList = document.querySelector('.box-ul').querySelectorAll(`.${findLi}`);
+		const length = nodeList.length;
+		let index = 0;
+		let hasActive = false;
+		for (let i = 0; i < length; i++) {
+			if (nodeList[i].className.includes(active)) {
+				index = i;
+				hasActive = true;
+			}
+		}
+		if (type === "up") {
+			nodeList[index].className = findLi;
+			if (index === 0) {
+				nodeList[0].className = `${active} ${findLi}`;
+			} else {
+				nodeList[index - 1].className = `${active} ${findLi}`;
+			}
+			document.querySelector('.box-ul').querySelector(`.${active}`).scrollIntoViewIfNeeded();
+		} else if (type === "down") {
+			nodeList[index].setAttribute('class', findLi);
+			if (index === length - 1) {
+				nodeList[index].setAttribute('class', `${active} ${findLi}`)
+			} else {
+				nodeList[index + 1].setAttribute('class', `${active} ${findLi}`)
+			}
+			document.querySelector('.box-ul').querySelector(`.${active}`).scrollIntoViewIfNeeded();
+		} else if (type === "enter") {
+			const node = document.querySelector(`.${active}`);
+			handleClick({
+				name: node.innerText,
+				value: node.attributes.data.value
+			}, tipShowType);
+			setTimeout(() => {
+				setCurState({
+					...curState,
+					tipShow: false,
+					tipShowType: null
+				});
+			}, 100);
+		};
+	};
+
+	const listenner = (e) => {
 		const targetClassName = e.target.className;
 		if (typeof (targetClassName) !== "string") return;
 		const list = [
@@ -200,7 +406,7 @@ export default class FormulaEdit extends PureComponent {
 		if (returnFalse) return false;
 		const targetPath = e.path;
 		let flag = false;
-		targetPath.forEach(item => {
+		targetPath && targetPath.forEach(item => {
 			if (item.className) {
 				if (typeof (item.className) !== "string") return;
 				if (item.className.includes("CodeMirror-line") ||
@@ -211,229 +417,49 @@ export default class FormulaEdit extends PureComponent {
 			}
 		});
 		if (flag) {
-			this.setState({ blurFlag: true });
+			setCurState({
+				...curState,
+				blurFlag: true
+			});
 		} else {
-			this.setState({
+			setCurState({
+				...curState,
 				blurFlag: false,
-				tipShow: false,
+				tipShow: false
 			});
 		}
 		if (targetClassName === "CodeMirror-scroll") {
-			this.setState({ blurFlag: true });
-		}
-	}
-
-	cursorActivity = (cm) => {
-		const { readOnly, fieldList = [], methodList = [] } = this.props;
-		if (readOnly) return;
-		const getCursor = cm.getCursor();
-		const pos = cm.cursorCoords(getCursor);
-		const getLineInfo = cm.getLine(getCursor.line);
-		const cursorBeforeOneChar = getLineInfo.substring(0, getCursor.ch);
-		const lastIndex = cursorBeforeOneChar.lastIndexOf("@", getCursor.ch);
-		const lastIndex2 = cursorBeforeOneChar.lastIndexOf("#", getCursor.ch);
-		if (fieldList.length > 0 && lastIndex !== -1 && lastIndex > lastIndex2) { // 监测@
-			const content = cursorBeforeOneChar.substring(lastIndex + 1, getCursor.ch);
-			const { fieldList } = this.props;
-			const findObj = fieldList.find(item => item.name.includes(content));
-			if (findObj) {
-				this.setState({
-					posLeft: pos.left,
-					posTop: pos.top + 20,
-					tipShow: true,
-					tipShowType: "@"
-				});
-				this.search(content, "@");
-			} else {
-				this.setState({
-					tipShow: false,
-					tipShowType: null
-				});
-			}
-		}
-		if (methodList.length > 0 && lastIndex2 !== -1 && lastIndex2 > lastIndex) { // 监测#
-			const content = cursorBeforeOneChar.substring(lastIndex2 + 1, getCursor.ch);
-			const { methodList } = this.props;
-			const findObj = methodList.find(item => item.name.includes(content));
-			if (findObj) {
-				this.setState({
-					posLeft: pos.left,
-					posTop: pos.top + 20,
-					tipShow: true,
-					tipShowType: "#"
-				});
-				this.search(content, "#");
-			} else {
-				this.setState({
-					tipShow: false,
-					tipShowType: null
-				});
-			}
-		}
-		if (!cursorBeforeOneChar.includes("@") && !cursorBeforeOneChar.includes("#")) {
-			this.setState({
-				tipShow: false,
-				tipShowType: null
+			setCurState({
+				...curState,
+				blurFlag: true
 			});
 		}
 	}
-
-	search(val, type) {
-		const { fieldList, methodList } = this.props;
-		let list = [];
-		const searchList = type === "@" ? fieldList : methodList;
-		searchList.forEach((item) => {
-			if (item.name.includes(val)) {
-				list.push(item);
-			}
-		});
-		this.setState({
-			dropList: list
-		});
-		this.defaultFirst(val, list);
-	}
-
-	handleClick(item, type) {
-		const getCursor = this.CodeMirrorEditor.getCursor();
-		const getLineInfo = this.CodeMirrorEditor.getLine(getCursor.line);
-		const cursorBeforeOneChar = getLineInfo.substring(0, getCursor.ch);
-		const lastIndex = cursorBeforeOneChar.lastIndexOf(type, getCursor.ch);
-		this.CodeMirrorEditor.setSelection(
-			{ line: getCursor.line, ch: lastIndex + 1 },
-			{ line: getCursor.line, ch: getCursor.ch },
-		);
-		let content = type === "@" ? item.name : item.value;
-		this.CodeMirrorEditor.replaceSelection(content);
-		this.CodeMirrorEditor.setCursor(getCursor.line, lastIndex + 1 + content.length);
-		this.CodeMirrorEditor.focus();
-		this.setState({
-			tipShow: false,
-			tipShowType: null
-		});
-	}
-
-	enterFuc = (type) => {
-		let findLi = "cm-field-li";
-		let active = "cm-active";
-		const nodeList = document.querySelectorAll(`.${findLi}`);
-		const length = nodeList.length;
-		let index = 0;
-		for (let i = 0; i < length; i++) {
-			if (nodeList[i].className.includes(active)) {
-				index = i;
-			}
-		}
-		if (type === "up") {
-			nodeList[index].className = findLi;
-			if (index === 0) {
-				nodeList[index].className = `${active} ${findLi}`;
-			} else {
-				nodeList[index - 1].className = `${active} ${findLi}`;
-			}
-		} else if (type === "down") {
-			nodeList[index].className = findLi;
-			if (index === length - 1) {
-				nodeList[index].className = `${active} ${findLi}`;
-			} else {
-				nodeList[index + 1].className = `${active} ${findLi}`;
-			}
-		} else if (type === "enter") {
-			const node = document.querySelector(`.${active}`);
-			const { tipShowType } = this.state;
-			this.handleClick({
-				name: node.innerText,
-				value: node.attributes.data.value
-			}, tipShowType);
-			setTimeout(() => {
-				this.setState({
-					tipShow: false,
-					tipShowType: null
-				});
-			}, 100);
-		}
-		document.querySelector(`.${active}`).scrollIntoViewIfNeeded();
-	}
-
-	defaultFirst = (val, list) => {
-		let findLi = "cm-field-li";
-		let active = "cm-active";
-		const nodeList = document.querySelectorAll(`.${findLi}`);
-		if (nodeList.length > 0) {
-			for (let i = 0; i < nodeList.length; i++) {
-				nodeList[i].className = findLi;
-			}
-			nodeList[0].className = `${active} ${findLi}`;
-		}
-		if (list && list.length === 1 && list[0].name === val) {
-			this.setState({
-				tipShow: false,
-				tipShowType: null
-			});
-		}
-	}
-
-	// 光标处插入值
-	insertValue = (value) => {
-		const { readOnly = false } = this.props;
-		if (readOnly || !value) return;
-		const getCursor = this.CodeMirrorEditor.getCursor();
-		this.CodeMirrorEditor.replaceSelection(value);
-		this.CodeMirrorEditor.setCursor(getCursor.line, getCursor.ch + value.length);
-		this.CodeMirrorEditor.focus();
-	}
-
-	// 全屏
-	fullScreen = () => {
-		this.CodeMirrorEditor.setOption("fullScreen", !this.CodeMirrorEditor.getOption("fullScreen"));
-	}
-
-	// 退出全屏
-	exitFullScreen = () => {
-		if (this.CodeMirrorEditor.getOption("fullScreen")) {
-			this.CodeMirrorEditor.setOption("fullScreen", false);
-		}
-	}
-
-	render() {
-		const { posLeft, posTop, tipShow, dropList } = this.state;
-		const { theme, children } = this.props;
-
-		return (
-			<div className="m-codemirror">
-				{children}
-				<textarea ref={this.ref}></textarea>
-				{/* @弹框 */}
-				<div
-					className={`codemirror-tip-${theme}`}
+	return (
+		<div className="m-codemirror">
+			{children}
+			<textarea ref={textareaRef} />
+			{/* @弹框 */}
+			{tipShow ? (
+				<ScrollContainer
+					theme={theme} //主题样式
+					dropList={dropList} //加载的数据
+					listLen={dropList.length} //加载的数据长度
+					listSize={20} //下拉列表一次显示多少条 默认20
+					itemHeight={30} //下拉列表单项高度 默认30
+					selectChange={(item) => {
+						handleClick(item, tipShowType);
+					}}
 					style={{
 						left: `${posLeft}px`,
 						top: `${posTop}px`,
-						display: tipShow ? "inline-block" : "none"
 					}}
-				>
-					<ul className="cm-field-ul">
-						{
-							dropList && dropList.length > 0 &&
-							dropList.map((item, index) => {
-								return (
-									<li
-										key={index}
-										className={index === 0 ? "cm-active cm-field-li" : "cm-field-li"}
-										data={item.value}
-										onClick={() => {
-											const { tipShowType } = this.state;
-											this.handleClick(item, tipShowType);
-										}}
-									>
-										{item.name}
-									</li>
-								);
-							})
-						}
-					</ul>
-				</div>
-			</div>
-		);
-	}
+				/>
+			) : ''}
+		</div>
+	);
+
 }
+
+export default FormulaEdit;
 

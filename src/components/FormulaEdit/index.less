@@ -10,17 +10,22 @@
             z-index: 999;
             background: #fff;
             width: 200px;
+            height: 200px; //
+            overflow: auto; //
             box-shadow: rgba(119, 119, 119, 0.2) 0px 0px 7px, rgba(0, 0, 0, 0) 1px 1px 0px inset, rgba(0, 0, 0, 0) -1px -1px 0px inset;
             font-size: 12px;
             ul{
                 margin: 0;
                 padding: 0;
-                max-height: 226px;
+                //max-height: 226px; //
                 overflow: auto;
                 li{
                     list-style: none;
-                    padding: 5px 10px;
+                    //padding: 5px 10px; //
                     cursor: pointer;
+                    padding: 0px 10px; //
+                    height: 30px; //
+                    line-height: 30px; //
                     &:hover{
                         background: #63acff;
                         color: #fff;
