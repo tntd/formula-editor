@@ -1,9 +1,3 @@
-/*
- * @Author: liubo
- * @CreatDate: 2019-02-19 18:24:32
- * @Describe: 计算公式编辑器组件
- */
-
 import React, { useEffect, useState, useRef, forwardRef } from "react";
 import * as CodeMirror from "codemirror/lib/codemirror";
 import "./defineScript";
@@ -125,7 +119,6 @@ const FormulaEdit = props => {
 	}, [height]);
 
 	const editorChanges = (cm) => {
-		console.log('object=======editorChanges')
 		if (props.onChange) {
 			const errorkeyword = document.body.querySelector(".cm-nomal-keyword");
 			let cnCode = cm.getValue();
@@ -143,10 +136,9 @@ const FormulaEdit = props => {
 	useEffect(() => {
 		if (codeMirrorEditor.current && fieldList.length) {
 			setLocalStorage();
-			let codeValue = codeMirrorEditor.current.getValue();
-			codeValue = EnCodeToCn(codeValue);
+			const codeValue = codeMirrorEditor.current.getValue();
 			codeMirrorEditor.current.setValue(codeValue);
-			insertValue(codeValue);
+			// insertValue(codeValue);
 
 			codeMirrorEditor.current.off("changes", editorChanges);
 			codeMirrorEditor.current.on("changes", editorChanges);
@@ -168,10 +160,10 @@ const FormulaEdit = props => {
 	const insertValue = (value) => {
 		if (readOnly || !value) return;
 		const getCursor = codeMirrorEditor.current.getCursor();
-		codeMirrorEditor.current.setCursor(getCursor.line, getCursor.ch + value.length);
-		codeMirrorEditor.current.focus();
+		const curLine = getCursor.ch;
+		codeMirrorEditor.current.setCursor(getCursor.line, curLine);
+		// codeMirrorEditor.current.focus();
 	}
-
 
 	const getLoacalList = (list, type) => {
 		const copyList = Object.assign([], list);
@@ -191,7 +183,6 @@ const FormulaEdit = props => {
 		}
 		return JSON.stringify(codemirrorList);
 	};
-
 
 	const setLocalStorage = () => {
 		// 字段存本地，供分词高亮使用
@@ -435,6 +426,7 @@ const FormulaEdit = props => {
 			});
 		}
 	}
+
 	return (
 		<div className="m-codemirror">
 			{children}
