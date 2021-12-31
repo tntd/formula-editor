@@ -136,9 +136,9 @@ const FormulaEdit = props => {
 	useEffect(() => {
 		if (codeMirrorEditor.current && fieldList.length) {
 			setLocalStorage();
-			const codeValue = codeMirrorEditor.current.getValue();
+			let codeValue = codeMirrorEditor.current.getValue() || value;
+			if (codeValue) codeValue = EnCodeToCn(codeValue);
 			codeMirrorEditor.current.setValue(codeValue);
-			// insertValue(codeValue);
 
 			codeMirrorEditor.current.off("changes", editorChanges);
 			codeMirrorEditor.current.on("changes", editorChanges);

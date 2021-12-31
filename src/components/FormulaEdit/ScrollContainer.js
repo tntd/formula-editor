@@ -43,6 +43,18 @@ const ScrollContainer = props => {
     }
 	},[dropList]);
 
+  useEffect(() => {
+    const container = document.querySelector('.box-ul');
+    container.addEventListener("click", (e) => {
+      const value = e.target.getAttribute('data-value')
+      const name = e.target.getAttribute('data-name')
+      selectChange({name, value});
+    });
+    return () => {
+      container.removeEventListener("click", () => {});
+    }
+  }, [])
+
 	const init = () => {
     const container = document.querySelector('.box-ul');
     container.style.paddingTop = `0px`;
@@ -95,16 +107,10 @@ const ScrollContainer = props => {
     let list = ``;
     for (let i = 0; i < currentList.length; i++) {
       let item = currentList[i];
-      list += `<li key=${i} class="cm-field-li" data=${item.value}>${item.name}</li>`;
+      list += `<li key=${i} class="cm-field-li" data-value="${item.value}" data="${item.value}" data-name="${item.name}">${item.name}</li>`;
     };
     container.innerHTML = '';
     container.innerHTML = list;
-    const liArr = document.getElementsByTagName('li');
-    for (let i=0; i<liArr.length;i++){
-      liArr[i].onclick = function(){
-        selectChange(currentList[i]);
-      }
-    }
 	};
 
   const bindNewItems = (isScrollDown) => {
