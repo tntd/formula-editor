@@ -56,6 +56,14 @@ import * as CodeMirror from "codemirror/lib/codemirror";
 						return "field-keyword";
 					}
 				}
+				// 处理@相关内容
+				const keywordsArray = localStorage.codemirrorKeywordList
+					? JSON.parse(localStorage.codemirrorKeywordList) : [];
+				for (let i = 0; i < keywordsArray.length; i++) {
+					if (stream.match(keywordsArray[i])) {
+						return "keyword";
+					}
+				}
 				// if (fieldKeywordArray.length > 0 && stream.match("@")) { return "field-keyword"; }
 
 				// 处理#相关内容

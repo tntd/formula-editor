@@ -1,27 +1,41 @@
 import React, { useEffect, useState, useRef, forwardRef } from "react";
 import * as CodeMirror from "codemirror/lib/codemirror";
+
 import "./defineScript";
+import "codemirror/mode/groovy/groovy";
+
 import "codemirror/lib/codemirror.css";
 import "codemirror/theme/3024-day.css";
 import "codemirror/theme/material.css";
+
 import "codemirror/addon/display/fullscreen.css";
-import "./index.less";
 import "codemirror/addon/display/fullscreen.js";
+
+import "./index.less";
+
+const beautify_js = require("js-beautify").js_beautify;
+
 import ScrollContainer from './ScrollContainer';
 
-const FormulaEdit = props => {
+const FormulaEdit = forwardRef((props, ref) => {
 	const {
 		children,
 		value = "",
 		readOnly = false,
 		theme = "night",
+		mode = "defineScript",
+		selectStyle = {
+			width: "200px"
+		},
 		lineNumber = true,
+		indentUnit = 2,
 		height = 300,
 		fieldList = [],
+		keyWords = ["int", "double", "string", "list", "boolean", "if", "else", "and", "or", "return"],
 		methodList,
 		normalList,
 		editorEvent,
-		 ...rest
+		...rest
 	} = props;
 
 	const [curState, setCurState] = useState({
@@ -55,16 +69,51 @@ const FormulaEdit = props => {
 		setLocalStorage();
 
 		let turnTheme;
+		let ops = {}
 		if (theme === "night") turnTheme = "material";
 		if (theme === "day") turnTheme = "3024-day";
+		if (mode === 'groovy') {
+			ops = {
+				mode: "text/x-groovy",
+				indentUnit: indentUnit,
+				extraKeys: {
+					Tab: (cm) => {
+						if (cm.somethingSelected()) { // 存在文本选择
+							cm.indentSelection("add"); // 正向缩进文本
+						} else { // 无文本选择
+							// cm.indentLine(cm.getCursor().line, "add");  // 整行缩进 不符合预期
+							cm.replaceSelection(Array(cm.getOption("indentUnit") + 1).join(" "), "end", "+input"); // 光标处插入 indentUnit 个空格
+						}
+					},
+					"Shift-Tab": (cm) => { // 反向缩进
+						if (cm.somethingSelected()) {
+							cm.indentSelection("subtract"); // 反向缩进
+						} else {
+							// cm.indentLine(cm.getCursor().line, "subtract");  // 直接缩进整行
+							const cursor = cm.getCursor();
+							cm.setCursor({ line: cursor.line, ch: cursor.ch - cm.getOption("indentUnit") }); // 光标回退 indexUnit 字符
+						}
+						return;
+					},
+					"Ctrl-F": (cm) => {
+						const formattValue = beautify_js(cm.getValue(), {
+							indent_size: indentUnit,
+							indent_char: indentUnit === "1" ? "\t" : " "
+						});
+						codeMirrorEditor.current.setValue(formattValue);
+					}
+				}
+			}
+		}
 
 		if (!codeMirrorEditor.current) {
 			codeMirrorEditor.current = CodeMirror.fromTextArea(textareaRef.current, {
-				mode: "defineScript",
+				mode,
 				theme: turnTheme,
 				lineNumbers: lineNumber,
 				lineWrapping: true,
 				readOnly: readOnly ? "nocursor" : false,
+				...ops,
 				...rest
 			});
 		}
@@ -76,7 +125,7 @@ const FormulaEdit = props => {
 
 		document.body.addEventListener("click", listenner);
 
-		editorEvent && editorEvent({ fullScreen, exitFullScreen })
+		editorEvent && editorEvent({ codeEditor: codeMirrorEditor.current, fullScreen, exitFullScreen })
 
 		return () => {
 			document.body.removeEventListener("click", listenner);
@@ -189,6 +238,7 @@ const FormulaEdit = props => {
 		localStorage.codemirrorFieldList = getLoacalList(fieldList, "@");
 		localStorage.codemirrorMethodList = getLoacalList(methodList || [], "#");
 		localStorage.codemirrorNormalList = getLoacalList(normalList || [], "");
+		localStorage.codemirrorKeywordList = JSON.stringify(keyWords);
 		const mArr = (methodList || []).map(item => `#${item.name}`);
 		const nArr = (normalList || []).map(item => item.name);
 		const keywords = [...mArr, ...nArr].join("|");
@@ -250,6 +300,7 @@ const FormulaEdit = props => {
 		const cursorBeforeOneChar = getLineInfo.substring(0, getCursor.ch);
 		const lastIndex = cursorBeforeOneChar.lastIndexOf("@", getCursor.ch);
 		const lastIndex2 = cursorBeforeOneChar.lastIndexOf("#", getCursor.ch);
+
 		if (fieldList.length > 0 && lastIndex !== -1 && lastIndex > lastIndex2) { // 监测@
 			const content = cursorBeforeOneChar.substring(lastIndex + 1, getCursor.ch);
 			const findObj = fieldList.find(item => item.name.includes(content));
@@ -445,13 +496,14 @@ const FormulaEdit = props => {
 					style={{
 						left: `${posLeft}px`,
 						top: `${posTop}px`,
+						...selectStyle
 					}}
 				/>
 			) : ''}
 		</div>
 	);
 
-}
+})
 
 export default FormulaEdit;
 

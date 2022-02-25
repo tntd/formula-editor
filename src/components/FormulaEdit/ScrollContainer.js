@@ -1,6 +1,33 @@
 import React, { useEffect } from "react";
 import "./index.less";
 
+const TYPE_MAP = {
+	'INT': {
+		'displayName': '整数',
+		'color': '#5262C7'
+	},
+	'DOUBLE': {
+		'displayName': '小数',
+		'color': '#00D2C2'
+	},
+	'STRING': {
+		'displayName': '字符',
+		'color': '#826AF9'
+	},
+	'ENUM': {
+		'displayName': '枚举',
+		'color': '#00C5DC'
+	},
+	'BOOLEAN': {
+		'displayName': '布尔',
+		'color': '#4A9AF7'
+	},
+	'DATETIME': {
+		'displayName': '时间',
+		'color': '#826AF9'
+	}
+};
+
 const firstItemClass = 'li-first', lastItemClass = 'li-last';
 const ScrollContainer = props => {
 	const {style, dropList, theme, selectChange, listLen, listSize, itemHeight} = props;
@@ -107,7 +134,8 @@ const ScrollContainer = props => {
     let list = ``;
     for (let i = 0; i < currentList.length; i++) {
       let item = currentList[i];
-      list += `<li key=${i} class="cm-field-li" data-value="${item.value}" data="${item.value}" data-name="${item.name}">${item.name}</li>`;
+      const dataTypeObj = TYPE_MAP[item.type] ? TYPE_MAP[item.type] : '';
+      list += `<li key=${i} class="cm-field-li" data-value="${item.value}" title="${item.name}" data="${item.value}" data-name="${item.name}">${dataTypeObj ? `<sup style="color: ${dataTypeObj.color}"> ${dataTypeObj.displayName}</sup>` : ''}${item.name}</li>`;
     };
     container.innerHTML = '';
     container.innerHTML = list;

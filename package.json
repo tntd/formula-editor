@@ -1,6 +1,6 @@
 {
   "name": "@tntd/formula-edit",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "react计算公式编辑器",
   "keywords": [
     "formula",
@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "codemirror": "^5.46.0",
+    "js-beautify": "^1.13.13",
     "react": "^16.8.6",
     "react-dom": "^16.8.6"
   },
