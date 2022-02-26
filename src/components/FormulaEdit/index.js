@@ -30,7 +30,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		lineNumber = true,
 		indentUnit = 2,
 		height = 300,
-		fieldList = [],
+		fieldList,
 		keyWords = ["int", "double", "string", "list", "boolean", "if", "else", "and", "or", "return"],
 		methodList,
 		normalList,
@@ -123,6 +123,9 @@ const FormulaEdit = forwardRef((props, ref) => {
 		codeMirrorEditor.current.setValue(codeValue);
 		codeMirrorEditor.current.setSize("auto", height);
 
+		codeMirrorEditor.current.off("changes", editorChanges);
+		codeMirrorEditor.current.on("changes", editorChanges);
+
 		document.body.addEventListener("click", listenner);
 
 		editorEvent && editorEvent({ codeEditor: codeMirrorEditor.current, fullScreen, exitFullScreen })
@@ -183,7 +186,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 	}
 
 	useEffect(() => {
-		if (codeMirrorEditor.current && fieldList.length) {
+		if (codeMirrorEditor.current && mode == 'defineScript') {
 			setLocalStorage();
 			let codeValue = codeMirrorEditor.current.getValue() || value;
 			if (codeValue) codeValue = EnCodeToCn(codeValue);
@@ -235,7 +238,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 	const setLocalStorage = () => {
 		// 字段存本地，供分词高亮使用
-		localStorage.codemirrorFieldList = getLoacalList(fieldList, "@");
+		localStorage.codemirrorFieldList = getLoacalList(fieldList || [], "@");
 		localStorage.codemirrorMethodList = getLoacalList(methodList || [], "#");
 		localStorage.codemirrorNormalList = getLoacalList(normalList || [], "");
 		localStorage.codemirrorKeywordList = JSON.stringify(keyWords);
@@ -250,7 +253,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			/@[^\+\*\/#%\),;\-=@或且]*/g,
 			(match) => {
 				let turnStr = match.replace(/^\s*|\s*$/g, "");
-				const fItem = fieldList.find(item => `@${item.name}` === turnStr);
+				const fItem = (fieldList || []).find(item => `@${item.name}` === turnStr);
 				if (fItem) turnStr = `@${fItem.value}`;
 				return turnStr;
 			}
@@ -270,7 +273,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 	};
 
 	const EnCodeToCn = (enCode) => {
-		const fValueArr = fieldList.map(item => `@${item.value}`);
+		const fValueArr = (fieldList || []).map(item => `@${item.value}`);
 		const mValueArr = (methodList || []).map(item => `#${item.realValue}`);
 		const nValueArr = (normalList || []).map(item => item.value);
 		const keywords = [...fValueArr, ...mValueArr, ...nValueArr].join("|");
@@ -279,7 +282,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			regExp,
 			(match) => {
 				let turnStr = match;
-				const fItem = fieldList.find(item => `@${item.value}` === match);
+				const fItem = (fieldList || []).find(item => `@${item.value}` === match);
 				if (fItem) turnStr = `@${fItem.name}`;
 				const mItem = (methodList || []).find(item => `#${item.realValue}` === match);
 				if (mItem) turnStr = `#${mItem.name}`;
@@ -301,7 +304,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		const lastIndex = cursorBeforeOneChar.lastIndexOf("@", getCursor.ch);
 		const lastIndex2 = cursorBeforeOneChar.lastIndexOf("#", getCursor.ch);
 
-		if (fieldList.length > 0 && lastIndex !== -1 && lastIndex > lastIndex2) { // 监测@
+		if (fieldList && fieldList.length > 0 && lastIndex !== -1 && lastIndex > lastIndex2) { // 监测@
 			const content = cursorBeforeOneChar.substring(lastIndex + 1, getCursor.ch);
 			const findObj = fieldList.find(item => item.name.includes(content));
 			if (findObj) {
@@ -353,7 +356,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 	const search = (val, type) => {
 		let list = [];
-		const searchList = type === "@" ? fieldList : (methodList || []);
+		const searchList = type === "@" ? (fieldList || []) : (methodList || []);
 		searchList.forEach((item) => {
 			if (item.name.includes(val)) {
 				list.push(item);

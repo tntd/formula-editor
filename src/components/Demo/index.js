@@ -64,7 +64,7 @@ const fieldList = [
 
 export default props => {
   const defaultCode = "hhahahah@111";
-  const [code, setCode] = useState('@fkje@hahahdsdhjbewdbu1');
+  const [code, setCode] = useState('');
   const [height, setHeight] = useState(300);
 
   const [list, setList] = useState(testData);
@@ -100,25 +100,13 @@ export default props => {
       />
       <FormulaEdit
         value={code} //传入组件自动转化成cnCode*/
-        fieldList={list} // @唤起
         mode={'groovy'}
-        methodList={list1} // #唤起
-        normalList={normalList} // 自定义无需校验关键词
         onChange={(enCode, data) => {
           console.log('onChange---------1')
           console.log(data)
           console.log('onChange---------2')
           setCode(enCode);
         }} // 回调
-
-        // editorEvent={(event) => {
-        //   formulaRef.current = event;
-        // }}
-
-        // defaultValue={defaultCode} // 初始化值 去除该属性
-        // readOnly={false} // 是否只读 默认false
-        // lineNumber={true} // 是否显示列数 默认true
-        // theme="night" // 主题 默认night
         height={height} // 高度 默认300
       />
        <FormulaEdit
@@ -133,14 +121,6 @@ export default props => {
           console.log('onChange---------2')
           setCode(enCode);
         }} // 回调
-
-        // editorEvent={(event) => {
-        //   formulaRef.current = event;
-        // }}
-
-        // defaultValue={defaultCode} // 初始化值 去除该属性
-        // readOnly={false} // 是否只读 默认false
-        // lineNumber={true} // 是否显示列数 默认true
         theme="day" // 主题 默认night
         height={height} // 高度 默认300
       />
