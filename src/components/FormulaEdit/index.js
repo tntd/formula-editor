@@ -123,8 +123,10 @@ const FormulaEdit = forwardRef((props, ref) => {
 		codeMirrorEditor.current.setValue(codeValue);
 		codeMirrorEditor.current.setSize("auto", height);
 
-		codeMirrorEditor.current.off("changes", editorChanges);
-		codeMirrorEditor.current.on("changes", editorChanges);
+		if (mode !== 'defineScript') {
+			codeMirrorEditor.current.off("changes", editorChanges);
+			codeMirrorEditor.current.on("changes", editorChanges);
+		}
 
 		document.body.addEventListener("click", listenner);
 
@@ -186,7 +188,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 	}
 
 	useEffect(() => {
-		if (codeMirrorEditor.current && mode == 'defineScript') {
+		if (codeMirrorEditor.current && mode === 'defineScript') {
 			setLocalStorage();
 			let codeValue = codeMirrorEditor.current.getValue() || value;
 			if (codeValue) codeValue = EnCodeToCn(codeValue);
@@ -427,7 +429,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		} else if (type === "enter") {
 			const node = document.querySelector(`.${active}`);
 			handleClick({
-				name: node.innerText,
+				name: node.title,
 				value: node.attributes.data.value
 			}, tipShowType);
 			setTimeout(() => {
