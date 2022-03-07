@@ -42,8 +42,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		posLeft: 0,
 		posTop: 0,
 		tipShow: false,
-		tipShowType: null,
-		blurFlag: false
+		tipShowType: null
 	});
 	const [dropList, setDropList] = useState([]);
 	const codeMirrorEditor = useRef();
@@ -128,13 +127,9 @@ const FormulaEdit = forwardRef((props, ref) => {
 			codeMirrorEditor.current.on("changes", editorChanges);
 		}
 
-		document.body.addEventListener("click", listenner);
-
 		editorEvent && editorEvent({ codeEditor: codeMirrorEditor.current, fullScreen, exitFullScreen })
 
-		return () => {
-			document.body.removeEventListener("click", listenner);
-		}
+		return () => {}
 	}, []);
 
 	useEffect(() => {
@@ -204,8 +199,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			codeMirrorEditor.current.on("focus", (cm) => {
 				cursorActivity(cm);
 				setCurState({
-					...curState,
-					blurFlag: true
+					...curState
 				});
 			});
 		}
@@ -441,47 +435,6 @@ const FormulaEdit = forwardRef((props, ref) => {
 			}, 100);
 		};
 	};
-
-	const listenner = (e) => {
-		const targetClassName = e.target.className;
-		if (typeof (targetClassName) !== "string") return;
-		const list = [
-			"codemirror-tip-day",
-			"codemirror-tip-night"
-		];
-		const returnFalse = list.find(item => targetClassName.includes(item));
-		if (returnFalse) return false;
-		const targetPath = e.path;
-		let flag = false;
-		targetPath && targetPath.forEach(item => {
-			if (item.className) {
-				if (typeof (item.className) !== "string") return;
-				if (item.className.includes("CodeMirror-line") ||
-					item.className.includes("CodeMirror-linenumber")
-				) {
-					flag = true;
-				}
-			}
-		});
-		if (flag) {
-			setCurState({
-				...curState,
-				blurFlag: true
-			});
-		} else {
-			setCurState({
-				...curState,
-				blurFlag: false,
-				tipShow: false
-			});
-		}
-		if (targetClassName === "CodeMirror-scroll") {
-			setCurState({
-				...curState,
-				blurFlag: true
-			});
-		}
-	}
 
 	return (
 		<div className="m-codemirror">
