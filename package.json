@@ -23,6 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "codemirror": "^5.46.0",
+    "intersection-observer": "^0.12.0",
     "js-beautify": "^1.13.13",
     "react": "^16.8.6",
     "react-dom": "^16.8.6"

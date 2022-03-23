@@ -30,7 +30,7 @@ import FormulaEdit from '../FormulaEdit';
 // };
 
 const testData = [];
-for (let i = 0; i < 8; i++) {
+for (let i = 0; i < 800; i++) {
   testData.push(
     { name: `[字段]测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试${i}`, value: `hahahdsdhjbewdbu${i}`, type: 'DOUBLE' }
   );
