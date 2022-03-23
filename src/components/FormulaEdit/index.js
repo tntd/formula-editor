@@ -207,7 +207,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 				});
 			});
 		}
-		if (fieldList.length || methodList.length || normalList.length) {
+		if ((fieldList || []).length || (methodList || []).length || (normalList || []).length) {
 			const codeValue = EnCodeToCn(value);
 			doChange(codeValue);
 		}
