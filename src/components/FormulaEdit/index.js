@@ -122,7 +122,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		codeMirrorEditor.current.setValue(codeValue);
 		codeMirrorEditor.current.setSize("auto", height);
 
-		if (mode !== 'defineScript') {
+		if (mode === 'groovy') {
 			codeMirrorEditor.current.off("changes", editorChanges);
 			codeMirrorEditor.current.on("changes", editorChanges);
 		}
@@ -167,23 +167,27 @@ const FormulaEdit = forwardRef((props, ref) => {
 		}
 	}, [height]);
 
+	const doChange = (cnCode) => {
+		const errorkeyword = document.body.querySelector(".cm-nomal-keyword");
+		let enCode = CnCodeToEn(cnCode);
+		const data = {
+			cnCode,
+			enCode,
+			errorMsg: errorkeyword ? "存在错误代码" : null
+		};
+		props.onChange(enCode, data);
+	}
+
 	const editorChanges = (cm) => {
 		if (props.onChange) {
-			const errorkeyword = document.body.querySelector(".cm-nomal-keyword");
-			let cnCode = cm.getValue();
+			const cnCode = cm.getValue();
 			// 正则替换关键词
-			let enCode = CnCodeToEn(cnCode);
-			const data = {
-				cnCode,
-				enCode,
-				errorMsg: errorkeyword ? "存在错误代码" : null
-			};
-			props.onChange(enCode, data);
+			doChange(cnCode);
 		}
 	}
 
 	useEffect(() => {
-		if (codeMirrorEditor.current && mode === 'defineScript') {
+		if (codeMirrorEditor.current && mode !== 'groovy') {
 			setLocalStorage();
 			let codeValue = codeMirrorEditor.current.getValue() || value;
 			if (codeValue) codeValue = EnCodeToCn(codeValue);
@@ -202,6 +206,10 @@ const FormulaEdit = forwardRef((props, ref) => {
 					...curState
 				});
 			});
+		}
+		if (fieldList.length || methodList.length || normalList.length) {
+			const codeValue = EnCodeToCn(value);
+			doChange(codeValue);
 		}
 	}, [fieldList, methodList, normalList]);
 

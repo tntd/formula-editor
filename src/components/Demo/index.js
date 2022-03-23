@@ -64,14 +64,27 @@ const fieldList = [
 
 export default props => {
   const defaultCode = "hhahahah@111";
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(`int a = 100;
+  string s = #求和("hello",@[字段]测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试1);
+  double d=777.324;
+  boolean x = a >= 0;
+  list result = [x, d, 333];
+  `);
   const [height, setHeight] = useState(300);
 
   const [list, setList] = useState(testData);
 
-  const [list1, setList1] = useState(methodList);
+  const [list1, setList1] = useState([]);
 
   const formulaRef = useRef();
+
+  useEffect(() => {
+    setTimeout(() => {
+      setList1(methodList)
+    }, 1000);
+    return () => {}
+  }, [])
+  
 
   return (
     <>
@@ -79,8 +92,7 @@ export default props => {
         ref={formulaRef}
         value={code} //传入组件自动转化成cnCode*/
         fieldList={list} // @唤起
-        methodList={list1} // #唤起
-        normalList={normalList} // 自定义无需校验关键词
+        methodList={list1} // @唤起
         onChange={(enCode, data) => {
           console.log('onChange---------1')
           console.log(data)
