@@ -65,7 +65,7 @@ const fieldList = [
 export default props => {
   const defaultCode = "hhahahah@111";
   const [code, setCode] = useState(`int a = 100;
-  string s = #求和("hello",@[字段]测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试1);
+  string s = #sum("hello",@hahahdsdhjbewdbu0);
   double d=777.324;
   boolean x = a >= 0;
   list result = [x, d, 333];
