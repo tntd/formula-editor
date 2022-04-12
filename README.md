@@ -17,6 +17,7 @@ npm install --save-dev @tntd/formula-edit
 <FormulaEdit
     value='@hahahdsdhjbewdbu1#avg(,)andhhhhhhh' //传入组件自动转化成cnCode
     fieldList={testData} // @唤起
+    typeMap={{'OBJECT':{'displayName':'对象','color': 'blue'}}} // 下拉框 自定义展示类型和颜色
     methodList={methodList} // #唤起
     normalList={normalList} // 自定义无需校验关键词
     onChange={(enCode,data)=>{}} // 回调
@@ -68,6 +69,7 @@ normalList: [
 | theme    | string  |  day     |   非必填  | 主题: 目前只支持两种：day，night |
 | readOnly  | boolean |  false   |   非必填  | 设置只读       |
 | lineNumber  | boolean |  false   |   非必填  | 设置行号       |
+| typeMap | object   |  无      |   非必填  | 自定义变量类型和颜色       |
 | fieldList | array   |  无      |   非必填  | 字段列表       |
 | methodList | array   |  无      |   非必填  | 方法列表       |
 | normalList | array   |  无      |   非必填  | 自定义关键词列表       |

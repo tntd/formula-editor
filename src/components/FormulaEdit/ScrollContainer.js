@@ -26,12 +26,16 @@ const TYPE_MAP = {
 	'DATETIME': {
 		'displayName': '时间',
 		'color': '#826AF9'
+	},
+  'ARRAY': {
+		'displayName': '数组',
+		'color': '#E5A74F'
 	}
 };
 
 const firstItemClass = 'li-first', lastItemClass = 'li-last';
 const ScrollContainer = props => {
-	const {style, dropList, theme, selectChange, listLen, listSize, itemHeight} = props;
+	const {style, dropList, theme, selectChange, listLen, listSize, itemHeight, typeMap} = props;
   const halfListSize = Math.floor(listSize / 2);
   let box = null, intersectionObserver = null, lastRenderIndex = 0, currentIndex=0,
       firstItem = null, lastItem = null, lastScrollTop = 0;
@@ -129,13 +133,14 @@ const ScrollContainer = props => {
   };
 
 	const renderList = (firstIndex, listSize)=>{
+    const newTypeMap = {...TYPE_MAP, ...typeMap}
 		let currentList = JSON.parse(JSON.stringify(dropList));
     currentList = currentList.splice(firstIndex, listSize);
     const container = document.querySelector('.box-ul');
     let list = ``;
     for (let i = 0; i < currentList.length; i++) {
       let item = currentList[i];
-      const dataTypeObj = TYPE_MAP[item.type] ? TYPE_MAP[item.type] : '';
+      const dataTypeObj = newTypeMap[item.type] ? newTypeMap[item.type] : '';
       list += `<li key=${i} class="cm-field-li" data-value="${item.value}" title="${item.name}" data="${item.value}" data-name="${item.name}">${dataTypeObj ? `<sup style="color: ${dataTypeObj.color}"> ${dataTypeObj.displayName}</sup>` : ''}${item.name}</li>`;
     };
     container.innerHTML = '';
