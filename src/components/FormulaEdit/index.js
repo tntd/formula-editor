@@ -3,6 +3,7 @@ import * as CodeMirror from "codemirror/lib/codemirror";
 
 import "./defineScript";
 import "codemirror/mode/groovy/groovy";
+import "codemirror/mode/sql/sql";
 
 import "codemirror/lib/codemirror.css";
 import "codemirror/theme/3024-day.css";
@@ -29,6 +30,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		},
 		lineNumber = true,
 		indentUnit = 2,
+		isEndMark,
 		height = 300,
 		fieldList,
 		typeMap={},
@@ -379,7 +381,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			{ line: getCursor.line, ch: lastIndex + 1 },
 			{ line: getCursor.line, ch: getCursor.ch },
 		);
-		let content = type === "@" ? item.name : item.value;
+		let content = type === "@" ? item.name + (isEndMark ? '@' : '') : item.value;
 		codeMirrorEditor.current.replaceSelection(content);
 		codeMirrorEditor.current.setCursor(getCursor.line, lastIndex + 1 + content.length);
 		codeMirrorEditor.current.focus();

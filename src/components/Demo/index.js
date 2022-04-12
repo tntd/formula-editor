@@ -126,7 +126,8 @@ export default props => {
        <FormulaEdit
         value={code} //传入组件自动转化成cnCode*/
         fieldList={list} // @唤起
-        mode={'groovy'}
+        mode={'sql'}
+        isEndMark
         methodList={list1} // #唤起
         normalList={normalList} // 自定义无需校验关键词
         onChange={(enCode, data) => {
@@ -135,7 +136,7 @@ export default props => {
           console.log('onChange---------2')
           setCode(enCode);
         }} // 回调
-        theme="day" // 主题 默认night
+        // theme="day" // 主题 默认night
         height={height} // 高度 默认300
       />
       <button onClick={() => {

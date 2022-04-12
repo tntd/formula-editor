@@ -70,6 +70,7 @@ normalList: [
 | readOnly  | boolean |  false   |   非必填  | 设置只读       |
 | lineNumber  | boolean |  false   |   非必填  | 设置行号       |
 | typeMap | object   |  无      |   非必填  | 自定义变量类型和颜色       |
+| isEndMark | boolean   |  false      |   非必填  | 是否需要@结束符       |
 | fieldList | array   |  无      |   非必填  | 字段列表       |
 | methodList | array   |  无      |   非必填  | 方法列表       |
 | normalList | array   |  无      |   非必填  | 自定义关键词列表       |
