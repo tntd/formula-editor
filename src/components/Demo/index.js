@@ -35,7 +35,9 @@ for (let i = 0; i < 800; i++) {
     { name: `[字段]测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试${i}`, value: `hahahdsdhjbewdbu${i}`, type: 'DOUBLE' }
   );
 }
-
+testData.push(
+  { name: `[字段]哈信贷测试`, value: `hahahdsdhjbewdbu$12123`, type: 'ARRAY' }
+);
 const methodList = [
   { name: "求和", value: "求和(,)", realValue: "sum" },
   { name: "平均值", value: "平均值(,)", realValue: "avg" },

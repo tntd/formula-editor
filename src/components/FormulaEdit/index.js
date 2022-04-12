@@ -31,6 +31,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		indentUnit = 2,
 		height = 300,
 		fieldList,
+		typeMap={},
 		keyWords = ["int", "double", "string", "list", "boolean", "if", "else", "and", "or", "return"],
 		methodList,
 		normalList,
@@ -456,6 +457,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 					listLen={dropList.length} //加载的数据长度
 					listSize={20} //下拉列表一次显示多少条 默认20
 					itemHeight={30} //下拉列表单项高度 默认30
+					typeMap={typeMap}
 					selectChange={(item) => {
 						handleClick(item, tipShowType);
 					}}
