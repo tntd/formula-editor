@@ -92,6 +92,7 @@ export default props => {
     <>
       <FormulaEdit
         ref={formulaRef}
+        placeholder="return a+b"
         value={code} //传入组件自动转化成cnCode*/
         fieldList={list} // @唤起
         methodList={list1} // @唤起
@@ -112,7 +113,8 @@ export default props => {
         // theme="night" // 主题 默认night
         height={height} // 高度 默认300
       />
-      <FormulaEdit
+       <FormulaEdit
+       placeholder="87878778"
         value={code} //传入组件自动转化成cnCode*/
         mode={'groovy'}
         onChange={(enCode, data) => {
@@ -153,6 +155,7 @@ export default props => {
       <button onClick={() => {
         const item = { name: "求和1", value: "求和1(,)", realValue: "sum" };
         const getCursor = formulaRef.current.codeEditor.getCursor();
+        debugger
         formulaRef.current.codeEditor.replaceSelection('#' + item.value);
         formulaRef.current.codeEditor.setCursor(getCursor.line, getCursor.ch + item.value.length);
         formulaRef.current.codeEditor.focus();

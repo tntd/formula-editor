@@ -38,6 +38,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		methodList,
 		normalList,
 		editorEvent,
+		placeholder,
 		...rest
 	} = props;
 
@@ -451,6 +452,8 @@ const FormulaEdit = forwardRef((props, ref) => {
 		<div className="m-codemirror">
 			{children}
 			<textarea ref={textareaRef} />
+			{placeholder && !value && <a className="placeholder">{placeholder}</a>}
+			
 			{/* @弹框 */}
 			{tipShow ? (
 				<ScrollContainer
