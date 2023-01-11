@@ -226,7 +226,6 @@ const ScrollContainer = props => {
     container.style.paddingTop = `${newCurrentPaddingTop}px`;
     container.style.paddingBottom = `${newCurrentPaddingBottom}px`;
   };
-  debugger
 	return (
 		<div
 			className={`codemirror-tip-${theme} scroll-container`}

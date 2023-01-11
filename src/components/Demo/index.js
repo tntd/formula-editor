@@ -155,7 +155,6 @@ export default props => {
       <button onClick={() => {
         const item = { name: "求和1", value: "求和1(,)", realValue: "sum" };
         const getCursor = formulaRef.current.codeEditor.getCursor();
-        debugger
         formulaRef.current.codeEditor.replaceSelection('#' + item.value);
         formulaRef.current.codeEditor.setCursor(getCursor.line, getCursor.ch + item.value.length);
         formulaRef.current.codeEditor.focus();
