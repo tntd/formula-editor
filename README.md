@@ -17,6 +17,7 @@ npm install --save-dev @tntd/formula-edit
 <FormulaEdit
     value='@hahahdsdhjbewdbu1#avg(,)andhhhhhhh' //传入组件自动转化成cnCode
     fieldList={testData} // @唤起
+    regRxp="@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*" //中文转英文默认正则
     typeMap={{'OBJECT':{'displayName':'对象','color': 'blue'}}} // 下拉框 自定义展示类型和颜色
     methodList={methodList} // #唤起
     normalList={normalList} // 自定义无需校验关键词

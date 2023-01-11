@@ -95,6 +95,7 @@ export default props => {
         placeholder="return a+b"
         value={code} //传入组件自动转化成cnCode*/
         fieldList={list} // @唤起
+        // regRxp="@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*" //中文转英文默认正则
         methodList={list1} // @唤起
         onChange={(enCode, data) => {
           console.log('onChange---------1')
@@ -102,7 +103,7 @@ export default props => {
           console.log('onChange---------2')
           setCode(enCode);
         }} // 回调
-
+        // normalList={normalList}
         editorEvent={(event) => {
           formulaRef.current = event;
         }}
@@ -131,7 +132,6 @@ export default props => {
         mode={'sql'}
         isEndMark
         methodList={list1} // #唤起
-        normalList={normalList} // 自定义无需校验关键词
         onChange={(enCode, data) => {
           console.log('onChange---------1')
           console.log(data)

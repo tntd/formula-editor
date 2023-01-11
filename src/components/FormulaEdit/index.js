@@ -30,6 +30,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		},
 		lineNumber = true,
 		indentUnit = 2,
+		regExp = '',
 		isEndMark,
 		height = 300,
 		fieldList,
@@ -49,6 +50,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		tipShowType: null
 	});
 	const [dropList, setDropList] = useState([]);
+	const [regExpState, setRegExpState] = useState('@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*');
 	const codeMirrorEditor = useRef();
 	const textareaRef = useRef();
 	const regExpRef = useRef('');
@@ -193,7 +195,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 	useEffect(() => {
 		if (codeMirrorEditor.current && mode !== 'groovy') {
 			setLocalStorage();
-			let codeValue = codeMirrorEditor.current.getValue() || value;
+			let codeValue = value;
 			if (codeValue) codeValue = EnCodeToCn(codeValue);
 			codeMirrorEditor.current.setValue(codeValue);
 
@@ -210,6 +212,11 @@ const FormulaEdit = forwardRef((props, ref) => {
 					...curState
 				});
 			});
+		}
+		if (!regExp && (normalList || []).length) {
+			let temp = normalList.map(res => res.name)
+			temp = temp.join('')
+			setRegExpState(`@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@${temp}]*`)
 		}
 		if ((fieldList || []).length || (methodList || []).length || (normalList || []).length) {
 			const codeValue = EnCodeToCn(value);
@@ -257,8 +264,8 @@ const FormulaEdit = forwardRef((props, ref) => {
 	};
 
 	const CnCodeToEn = (cnCode) => {
-		let enCode = cnCode.replace(
-			/@[^\+\*\/#%\),;\-=@或且]*/g,
+		const reg = new RegExp(regExp || regExpState, "g");
+		let enCode = cnCode.replace(reg,
 			(match) => {
 				let turnStr = match.replace(/^\s*|\s*$/g, "");
 				const fItem = (fieldList || []).find(item => `@${item.name}` === turnStr);
