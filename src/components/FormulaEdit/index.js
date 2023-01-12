@@ -50,7 +50,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		tipShowType: null
 	});
 	const [dropList, setDropList] = useState([]);
-	const [regExpState, setRegExpState] = useState('@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*');
+	const [regExpState, setRegExpState] = useState('@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\s\\-=@]*');
 	const codeMirrorEditor = useRef();
 	const textareaRef = useRef();
 	const regExpRef = useRef('');
@@ -216,7 +216,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		if (!regExp && (normalList || []).length) {
 			let temp = normalList.map(res => res.name)
 			temp = temp.join('')
-			setRegExpState(`@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@${temp}]*`)
+			setRegExpState(`@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\s\\-=@${temp}]*`)
 		}
 		if ((fieldList || []).length || (methodList || []).length || (normalList || []).length) {
 			const codeValue = EnCodeToCn(value);
