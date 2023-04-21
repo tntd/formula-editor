@@ -288,17 +288,24 @@ const FormulaEdit = forwardRef((props, ref) => {
 	};
 
 	const EnCodeToCn = (enCode) => {
-		const fValueArr = (fieldList || []).map(item => `@${item.value}`);
+		const reg = new RegExp(regExp || regExpState, "g");
 		const mValueArr = (methodList || []).map(item => `#${item.realValue}`);
 		const nValueArr = (normalList || []).map(item => item.value);
-		const keywords = [...fValueArr, ...mValueArr, ...nValueArr].join("|");
+		const keywords = [...mValueArr, ...nValueArr].join("|");
 		const regExp = new RegExp(`(${keywords})`, "g");
 		let cnCode = enCode.replace(
-			regExp,
+			reg,
 			(match) => {
 				let turnStr = match;
 				const fItem = (fieldList || []).find(item => `@${item.value}` === match);
 				if (fItem) turnStr = `@${fItem.name}`;
+				return turnStr;
+			}
+		);
+		cnCode = cnCode.replace(
+			regExp,
+			(match) => {
+				let turnStr = match;
 				const mItem = (methodList || []).find(item => `#${item.realValue}` === match);
 				if (mItem) turnStr = `#${mItem.name}`;
 				const nItem = (normalList || []).find(item => item.value === match);
