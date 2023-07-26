@@ -40,6 +40,8 @@ const FormulaEdit = forwardRef((props, ref) => {
 		normalList,
 		editorEvent,
 		placeholder,
+        cnCodeToEnExtraLogic,
+        enCodeToCnExtraLogic,
 		...rest
 	} = props;
 
@@ -269,7 +271,16 @@ const FormulaEdit = forwardRef((props, ref) => {
 			(match) => {
 				let turnStr = match.replace(/^\s*|\s*$/g, "");
 				const fItem = (fieldList || []).find(item => `@${item.name}` === turnStr);
-				if (fItem) turnStr = `@${fItem.value}`;
+				if (fItem) {
+                    turnStr = `@${fItem.value}`;
+
+                    if (cnCodeToEnExtraLogic) {
+                        const cnCodeTemp = cnCodeToEnExtraLogic(fItem);
+                        if (cnCodeTemp) {
+                            turnStr = cnCodeTemp + turnStr;
+                        }
+                    }
+                }
 				return turnStr;
 			}
 		);
@@ -302,6 +313,14 @@ const FormulaEdit = forwardRef((props, ref) => {
 				return turnStr;
 			}
 		);
+
+        if (enCodeToCnExtraLogic) {
+            const cnCodeTemp = enCodeToCnExtraLogic(cnCode);
+            if (cnCodeTemp) {
+                cnCode = cnCodeTemp;
+            }
+        }
+
 		cnCode = cnCode.replace(
 			regExp,
 			(match) => {
@@ -467,7 +486,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			{children}
 			<textarea ref={textareaRef} />
 			{placeholder && !value && <a className="placeholder">{placeholder}</a>}
-			
+
 			{/* @弹框 */}
 			{tipShow ? (
 				<ScrollContainer

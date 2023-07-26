@@ -57,6 +57,33 @@ normalList: [
 ],
 ```
 
+## 特殊数据场景 @STRINGαC_S_CARDNO
+```
+const typeKeyWords = ['αINT', 'αSTRING', 'αDOUBLE', 'αBOOLEAN', 'αDATETIME', 'αLONG', 'αENUM', 'αJSON'];
+
+const enCodeToCnExtraLogic = (enCode) => {
+    const regExp = new RegExp(`(${typeKeyWords.join('|')})`, 'g');
+    const cnCode = enCode.replace(regExp, () => {
+        return '';
+    });
+    return cnCode;
+};
+
+<FormulaEdit
+    value='@hahahdsdhjbewdbu1#avg(,)andhhhhhhh' //传入组件自动转化成cnCode
+    fieldList={testData} // @唤起
+    regRxp="@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*" //中文转英文默认正则
+    typeMap={{'OBJECT':{'displayName':'对象','color': 'blue'}}} // 下拉框 自定义展示类型和颜色
+    methodList={methodList} // #唤起
+    normalList={normalList} // 自定义无需校验关键词
+    onChange={(enCode,data)=>{}} // 回调
+    cnCodeToEnExtraLogic={(item) => {
+        return `α${item.type}`;
+    }}
+    enCodeToCnExtraLogic={enCodeToCnExtraLogic}
+/>
+```
+
 ## 编辑器效果
 ![Image text](https://github.com/bruceliu68/formulaEdit-react/blob/master/src/img/pic1.png)
 ![Image text](https://github.com/bruceliu68/formulaEdit-react/blob/master/src/img/pic2.png)

@@ -64,6 +64,17 @@ const fieldList = [
   { name: "借款人身份证", value: "jkrsfz" }
 ];
 
+const typeKeyWords = ['αINT', 'αSTRING', 'αDOUBLE', 'αBOOLEAN', 'αDATETIME', 'αLONG', 'αENUM', 'αJSON'];
+
+const enCodeToCnExtraLogic = (enCode) => {
+    const regExp = new RegExp(`(${typeKeyWords.join('|')})`, 'g');
+    const cnCode = enCode.replace(regExp, () => {
+        return '';
+    });
+    return cnCode;
+};
+
+
 export default props => {
   const defaultCode = "hhahahah@111";
   const [code, setCode] = useState(`int a = 100;
@@ -86,7 +97,7 @@ export default props => {
     }, 1000);
     return () => {}
   }, [])
-  
+
 
   return (
     <>
@@ -107,6 +118,11 @@ export default props => {
         editorEvent={(event) => {
           formulaRef.current = event;
         }}
+
+        // cnCodeToEnExtraLogic={(item) => {
+        //     return `α${item.type}`;
+        // }}
+        // enCodeToCnExtraLogic={enCodeToCnExtraLogic}
 
         // defaultValue={defaultCode} // 初始化值 去除该属性
         // readOnly={false} // 是否只读 默认false
