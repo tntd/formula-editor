@@ -135,7 +135,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			codeMirrorEditor.current.on("changes", editorChanges);
 		}
 
-		editorEvent && editorEvent({ codeEditor: codeMirrorEditor.current, fullScreen, exitFullScreen })
+		editorEvent && editorEvent({ codeEditor: codeMirrorEditor.current, fullScreen, exitFullScreen, EnCodeToCn, CnCodeToEn });
 
 		return () => {}
 	}, []);
