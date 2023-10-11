@@ -5,6 +5,7 @@ const cookies = new Cookies();
 export const TypeMap = {
     cn: {
         INT: '整数',
+        LONG: '整数',
         DOUBLE: '小数',
         STRING: '字符串',
         ENUM: '枚举',
@@ -15,6 +16,7 @@ export const TypeMap = {
 
     en: {
         INT: 'Integer',
+        LONG: 'Integer',
         DOUBLE: 'Double',
         STRING: 'String',
         ENUM: 'Enum',
