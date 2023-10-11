@@ -42,7 +42,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		placeholder,
         cnCodeToEnExtraLogic,
         enCodeToCnExtraLogic,
-		lang = 'cn',
+		lang,
 		...rest
 	} = props;
 

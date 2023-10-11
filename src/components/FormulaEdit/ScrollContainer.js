@@ -6,7 +6,7 @@ import { getTypeMap } from './otp';
 
 const firstItemClass = 'li-first', lastItemClass = 'li-last';
 const ScrollContainer = props => {
-	const {style, dropList, theme, selectChange, listLen, listSize, itemHeight, typeMap, lang = 'cn'} = props;
+	const {style, dropList, theme, selectChange, listLen, listSize, itemHeight, typeMap, lang} = props;
   const halfListSize = Math.floor(listSize / 2);
   let box = null, intersectionObserver = null, lastRenderIndex = 0, currentIndex=0,
       firstItem = null, lastItem = null, lastScrollTop = 0;
