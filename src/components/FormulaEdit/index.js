@@ -42,6 +42,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		placeholder,
         cnCodeToEnExtraLogic,
         enCodeToCnExtraLogic,
+		lang = 'cn',
 		...rest
 	} = props;
 
@@ -504,6 +505,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 						top: `${posTop}px`,
 						...selectStyle
 					}}
+					lang={lang}
 				/>
 			) : ''}
 		</div>

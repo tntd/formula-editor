@@ -2,43 +2,16 @@ import 'intersection-observer'
 import React, { useEffect } from "react";
 import "./index.less";
 
-const TYPE_MAP = {
-	'INT': {
-		'displayName': '整数',
-		'color': '#5262C7'
-	},
-	'DOUBLE': {
-		'displayName': '小数',
-		'color': '#00D2C2'
-	},
-	'STRING': {
-		'displayName': '字符',
-		'color': '#826AF9'
-	},
-	'ENUM': {
-		'displayName': '枚举',
-		'color': '#00C5DC'
-	},
-	'BOOLEAN': {
-		'displayName': '布尔',
-		'color': '#4A9AF7'
-	},
-	'DATETIME': {
-		'displayName': '时间',
-		'color': '#826AF9'
-	},
-  'ARRAY': {
-		'displayName': '数组',
-		'color': '#E5A74F'
-	}
-};
+import { getTypeMap } from './otp';
 
 const firstItemClass = 'li-first', lastItemClass = 'li-last';
 const ScrollContainer = props => {
-	const {style, dropList, theme, selectChange, listLen, listSize, itemHeight, typeMap} = props;
+	const {style, dropList, theme, selectChange, listLen, listSize, itemHeight, typeMap, lang = 'cn'} = props;
   const halfListSize = Math.floor(listSize / 2);
   let box = null, intersectionObserver = null, lastRenderIndex = 0, currentIndex=0,
       firstItem = null, lastItem = null, lastScrollTop = 0;
+
+  const TYPE_MAP = getTypeMap(lang);
 
 	useEffect(() => {
 	  // console.log('dropList-----')
