@@ -5,7 +5,6 @@ const cookies = new Cookies();
 export const TypeMap = {
     cn: {
         INT: '整数',
-        LONG: '整数',
         DOUBLE: '小数',
         STRING: '字符串',
         ENUM: '枚举',
@@ -16,7 +15,6 @@ export const TypeMap = {
 
     en: {
         INT: 'Integer',
-        LONG: 'Integer',
         DOUBLE: 'Double',
         STRING: 'String',
         ENUM: 'Enum',
@@ -31,12 +29,16 @@ export const getLang = () => {
 };
 
 
-export const getTypeMap = (language) => {
+export const getTypeMap = (typeMap,language) => {
     let lang = language || getLang();
     let otp = TypeMap[lang];
 
     const TYPE_MAP = {
         'INT': {
+            'displayName': otp.INT,
+            'color': '#5262C7'
+        },
+        'LONG': {
             'displayName': otp.INT,
             'color': '#5262C7'
         },
