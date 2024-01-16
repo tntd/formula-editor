@@ -17,6 +17,17 @@ import "./index.less";
 const beautify_js = require("js-beautify").js_beautify;
 
 import ScrollContainer from './ScrollContainer';
+const sortBy = (a, b) => {
+	if (a.length > b.length) {
+		return -1;
+	}
+	if (a.length < b.length) {
+		return 1;
+	}
+	return 0;
+};
+let index=0;
+const getId = () => `formula-edit-${index++}`
 
 const FormulaEdit = forwardRef((props, ref) => {
 	const {
@@ -57,6 +68,9 @@ const FormulaEdit = forwardRef((props, ref) => {
 	const codeMirrorEditor = useRef();
 	const textareaRef = useRef();
 	const regExpRef = useRef('');
+	const fieldRegExpRef = useRef('');
+	const funRegExpRef = useRef('');
+	const domId = useRef(getId());
 
 	const { posLeft, posTop, tipShowType, tipShow } = curState;
 
@@ -104,11 +118,11 @@ const FormulaEdit = forwardRef((props, ref) => {
 						return;
 					},
 					"Ctrl-F": (cm) => {
-						const formattValue = beautify_js(cm.getValue(), {
+						const formatValue = beautify_js(cm.getValue(), {
 							indent_size: indentUnit,
 							indent_char: indentUnit === "1" ? "\t" : " "
 						});
-						codeMirrorEditor.current.setValue(formattValue);
+						codeMirrorEditor.current.setValue(formatValue);
 					}
 				}
 			}
@@ -177,12 +191,12 @@ const FormulaEdit = forwardRef((props, ref) => {
 	}, [height]);
 
 	const doChange = (cnCode) => {
-		const errorkeyword = document.body.querySelector(".cm-nomal-keyword");
+		const errorKeyword = document.body.querySelector(".cm-nomal-keyword");
 		let enCode = CnCodeToEn(cnCode);
 		const data = {
 			cnCode,
 			enCode,
-			errorMsg: errorkeyword ? "存在错误代码" : null
+			errorMsg: errorKeyword ? "存在错误代码" : null
 		};
 		props.onChange(enCode, data);
 	}
@@ -235,7 +249,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		// codeMirrorEditor.current.focus();
 	}
 
-	const getLoacalList = (list, type) => {
+	const getLocalList = (list, type) => {
 		const copyList = Object.assign([], list);
 		// 排序，把长的放前面
 		copyList.sort((a, b) => {
@@ -256,14 +270,17 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 	const setLocalStorage = () => {
 		// 字段存本地，供分词高亮使用
-		localStorage.codemirrorFieldList = getLoacalList(fieldList || [], "@");
-		localStorage.codemirrorMethodList = getLoacalList(methodList || [], "#");
-		localStorage.codemirrorNormalList = getLoacalList(normalList || [], "");
+		localStorage.codemirrorFieldList = getLocalList(fieldList || [], "@");
+		localStorage.codemirrorMethodList = getLocalList(methodList || [], "#");
+		localStorage.codemirrorNormalList = getLocalList(normalList || [], "");
 		localStorage.codemirrorKeywordList = JSON.stringify(keyWords);
+		const fArr = (fieldList || []).map(item => `@${item.name.replace(/\[/g, '\\[').replace(/\]/g, '\\]')}`);
 		const mArr = (methodList || []).map(item => `#${item.name}`);
 		const nArr = (normalList || []).map(item => item.name);
-		const keywords = [...mArr, ...nArr].join("|");
-		regExpRef.current = new RegExp(`(${keywords})`, "g");
+		const keywords = [...mArr, ...nArr];
+		regExpRef.current = new RegExp(`(${keywords.join("|")})`, "g");
+		funRegExpRef.current = new RegExp(`(${keywords.sort(sortBy).join("|")})`);
+		fieldRegExpRef.current = new RegExp(`(${fArr.sort(sortBy).join("|")})`);
 	};
 
 	const CnCodeToEn = (cnCode) => {
@@ -408,17 +425,43 @@ const FormulaEdit = forwardRef((props, ref) => {
 	};
 
 	const handleClick = (item, type) => {
-		const getCursor = codeMirrorEditor.current.getCursor();
-		const getLineInfo = codeMirrorEditor.current.getLine(getCursor.line);
-		const cursorBeforeOneChar = getLineInfo.substring(0, getCursor.ch);
-		const lastIndex = cursorBeforeOneChar.lastIndexOf(type, getCursor.ch);
+		const getCursor = codeMirrorEditor.current.getCursor(); // 焦点
+		const getLineInfo = codeMirrorEditor.current.getLine(getCursor.line);  // 当前行数据
+		const cursorBeforeOneChar = getLineInfo.substring(0, getCursor.ch);  // 起始到当前焦点数据
+		const lastIndex = cursorBeforeOneChar.lastIndexOf(type, getCursor.ch);  // 最后一个标记位置
+		const cursorAfterOneChar = getLineInfo.substring(lastIndex, getLineInfo.length);  // 最后一个标记到结尾数据
+		let endIndex = getCursor.ch;
+		if (type === "@" || type === "#") {
+			const regExpRef = type === "@" ? fieldRegExpRef.current : funRegExpRef.current;
+			const match = cursorAfterOneChar.match(regExpRef);
+			if (match && match.index === 0) { // 第一个匹配的
+				endIndex = lastIndex + match[0].length;
+			}
+		}
 		codeMirrorEditor.current.setSelection(
 			{ line: getCursor.line, ch: lastIndex + 1 },
-			{ line: getCursor.line, ch: getCursor.ch },
+			{ line: getCursor.line, ch: endIndex },
 		);
-		let content = type === "@" ? item.name + (isEndMark ? '@' : '') : item.value;
+		let content = "";
+		let offsetIndex = 0;
+		if (type === "@") {
+			content = item.name + (isEndMark ? '@' : '');
+			// 好像不通用，暂时隐藏
+			// if ([',', ')'].includes(getLineInfo[endIndex])) {
+			// 	// 如果后面是逗号或者括号，聚焦到后面
+			// 	offsetIndex = 1;
+			// }
+		} else if (type === "#" && getLineInfo.length > endIndex) {
+			content = item.name;
+		} else {
+			content = item.value;
+		}
+		if (type === "#" && content.includes(',')) {
+			// 函数聚焦到逗号前面
+			offsetIndex = content.indexOf(',') - content.length;
+		}
 		codeMirrorEditor.current.replaceSelection(content);
-		codeMirrorEditor.current.setCursor(getCursor.line, lastIndex + 1 + content.length);
+		codeMirrorEditor.current.setCursor(getCursor.line, lastIndex + 1 + content.length + offsetIndex);
 		codeMirrorEditor.current.focus();
 		setCurState({
 			...curState,
@@ -440,7 +483,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		}
 		let findLi = "cm-field-li";
 		let active = "cm-active";
-		const nodeList = document.querySelector('.box-ul').querySelectorAll(`.${findLi}`);
+		const nodeList = document.getElementById(domId.current).querySelectorAll(`.${findLi}`);
 		const length = nodeList.length;
 		let index = 0;
 		let hasActive = false;
@@ -457,7 +500,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			} else {
 				nodeList[index - 1].className = `${active} ${findLi}`;
 			}
-			document.querySelector('.box-ul').querySelector(`.${active}`).scrollIntoViewIfNeeded();
+			document.getElementById(domId.current).querySelector(`.${active}`).scrollIntoViewIfNeeded();
 		} else if (type === "down") {
 			nodeList[index].setAttribute('class', findLi);
 			if (index === length - 1) {
@@ -465,7 +508,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			} else {
 				nodeList[index + 1].setAttribute('class', `${active} ${findLi}`)
 			}
-			document.querySelector('.box-ul').querySelector(`.${active}`).scrollIntoViewIfNeeded();
+			document.getElementById(domId.current).querySelector(`.${active}`).scrollIntoViewIfNeeded();
 		} else if (type === "enter") {
 			const node = document.querySelector(`.${active}`);
 			handleClick({
@@ -506,6 +549,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 						...selectStyle
 					}}
 					lang={lang}
+					domId={domId.current}
 				/>
 			) : ''}
 		</div>

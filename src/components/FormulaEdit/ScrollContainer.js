@@ -6,7 +6,7 @@ import { getTypeMap } from './otp';
 
 const firstItemClass = 'li-first', lastItemClass = 'li-last';
 const ScrollContainer = props => {
-	const {style, dropList, theme, selectChange, listLen, listSize, itemHeight, typeMap, lang} = props;
+	const { style, dropList, theme, selectChange, listLen, listSize, itemHeight, typeMap, lang, domId } = props;
   const halfListSize = Math.floor(listSize / 2);
   let box = null, intersectionObserver = null, lastRenderIndex = 0, currentIndex=0,
       firstItem = null, lastItem = null, lastScrollTop = 0;
@@ -17,11 +17,11 @@ const ScrollContainer = props => {
 	  // console.log('dropList-----')
 	  // console.log(dropList)
 	  window.currentIndex = currentIndex;
-    if(listLen<=listSize){
+    if (listLen<=listSize) {
       renderList(0,listLen);
-      const container = document.querySelector('.box-ul');
+      const container = document.getElementById(domId);
       listLen&&container&&container.children&&container.children[0].classList.add('cm-active');
-    }else{
+    } else {
       // 创建 intersectionObserver 对象
       intersectionObserver = new IntersectionObserver(entries => {
         for (const entry of entries) {
@@ -49,7 +49,7 @@ const ScrollContainer = props => {
 	},[dropList]);
 
   useEffect(() => {
-    const container = document.querySelector('.box-ul');
+    const container = document.getElementById(domId);
     container.addEventListener("click", (e) => {
       const value = e.target.getAttribute('data-value')
       const name = e.target.getAttribute('data-name')
@@ -61,7 +61,7 @@ const ScrollContainer = props => {
   }, [])
 
 	const init = () => {
-    const container = document.querySelector('.box-ul');
+    const container = document.getElementById(domId);
     container.style.paddingTop = `0px`;
     container.style.paddingBottom = `0px`;
     box = null;
@@ -109,7 +109,7 @@ const ScrollContainer = props => {
     const newTypeMap = {...TYPE_MAP, ...typeMap}
 		let currentList = JSON.parse(JSON.stringify(dropList));
     currentList = currentList.splice(firstIndex, listSize);
-    const container = document.querySelector('.box-ul');
+    const container = document.getElementById(domId);
     let list = ``;
     for (let i = 0; i < currentList.length; i++) {
       let item = currentList[i];
@@ -121,7 +121,7 @@ const ScrollContainer = props => {
 	};
 
   const bindNewItems = (isScrollDown) => {
-  	const container = document.querySelector('.box-ul');
+  	const container = document.getElementById(domId);
     firstItem && intersectionObserver&&intersectionObserver.unobserve(firstItem);
     lastItem && intersectionObserver&&intersectionObserver.unobserve(lastItem);
     if(container&&container.children&&container.children.length){
@@ -191,7 +191,7 @@ const ScrollContainer = props => {
   };
 
   const adjustPaddings = (firstIndex) => {
-    const container = document.querySelector('.box-ul');
+    const container = document.getElementById(domId);
     const halfListSizeHeight = halfListSize * itemHeight;
     const totalPadding = (listLen - listSize) / halfListSize * halfListSizeHeight;
     const newCurrentPaddingTop = firstIndex <= 0 ? 0 : (firstIndex / halfListSize) * halfListSizeHeight;
@@ -207,7 +207,7 @@ const ScrollContainer = props => {
 			}}
       id="scrollDiv"
 		>
-			<ul className="cm-field-ul box-ul" ref={e => box=e}/>
+			<ul className="cm-field-ul box-ul" ref={e => box=e} id={domId}/>
 		</div>
 	);
 };
