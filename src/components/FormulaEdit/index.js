@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, forwardRef } from "react";
+import React, { useEffect, useState, useRef, forwardRef, useCallback } from "react";
 import * as CodeMirror from "codemirror/lib/codemirror";
 
 import "./defineScript";
@@ -71,6 +71,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 	const fieldRegExpRef = useRef('');
 	const funRegExpRef = useRef('');
 	const domId = useRef(getId());
+	const fieldMapRef =useRef({ fieldList, methodList, normalList });
 
 	const { posLeft, posTop, tipShowType, tipShow } = curState;
 
@@ -87,9 +88,27 @@ const FormulaEdit = forwardRef((props, ref) => {
 		}
 	}
 
+	const setLocalStorage = () => {
+		// 字段存本地，供分词高亮使用
+		localStorage.codemirrorFieldList = getLocalList(fieldList || [], "@");
+		localStorage.codemirrorMethodList = getLocalList(methodList || [], "#");
+		localStorage.codemirrorNormalList = getLocalList(normalList || [], "");
+		localStorage.codemirrorKeywordList = JSON.stringify(keyWords);
+		const fArr = (fieldList || []).map(item => `@${item.name.replace(/\[/g, '\\[').replace(/\]/g, '\\]')}`);
+		const mArr = (methodList || []).map(item => `#${item.name}`);
+		const nArr = (normalList || []).map(item => item.name);
+		const keywords = [...mArr, ...nArr];
+		regExpRef.current = new RegExp(`(${keywords.join("|")})`, "g");
+		funRegExpRef.current = new RegExp(`(${keywords.sort(sortBy).join("|")})`);
+		fieldRegExpRef.current = new RegExp(`(${fArr.sort(sortBy).join("|")})`);
+		fieldMapRef.current = { fieldList, methodList, normalList };
+	};
+
 	useEffect(() => {
 		setLocalStorage();
+	}, [fieldList, methodList, normalList]);
 
+	useEffect(() => {
 		let turnTheme;
 		let ops = {}
 		if (theme === "night") turnTheme = "material";
@@ -142,11 +161,12 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 		let codeValue = '';
 		if (value) codeValue = EnCodeToCn(value);
-		codeMirrorEditor.current.setValue(codeValue);
-		codeMirrorEditor.current.setSize("auto", height);
-
 		if (mode === 'groovy') {
 			codeMirrorEditor.current.off("changes", editorChanges);
+		}
+		codeMirrorEditor.current.setValue(codeValue);
+		codeMirrorEditor.current.setSize("auto", height);
+		if (mode === 'groovy') {
 			codeMirrorEditor.current.on("changes", editorChanges);
 		}
 
@@ -201,22 +221,20 @@ const FormulaEdit = forwardRef((props, ref) => {
 		props.onChange(enCode, data);
 	}
 
-	const editorChanges = (cm) => {
+	const editorChanges = useCallback((cm) => {
 		if (props.onChange) {
 			const cnCode = cm.getValue();
 			// 正则替换关键词
 			doChange(cnCode);
 		}
-	}
+	}, []);
 
 	useEffect(() => {
 		if (codeMirrorEditor.current && mode !== 'groovy') {
-			setLocalStorage();
 			let codeValue = value;
 			if (codeValue) codeValue = EnCodeToCn(codeValue);
-			codeMirrorEditor.current.setValue(codeValue);
-
 			codeMirrorEditor.current.off("changes", editorChanges);
+			codeMirrorEditor.current.setValue(codeValue);
 			codeMirrorEditor.current.on("changes", editorChanges);
 
 			codeMirrorEditor.current.on("cursorActivity", (cm) => {
@@ -268,22 +286,8 @@ const FormulaEdit = forwardRef((props, ref) => {
 		return JSON.stringify(codemirrorList);
 	};
 
-	const setLocalStorage = () => {
-		// 字段存本地，供分词高亮使用
-		localStorage.codemirrorFieldList = getLocalList(fieldList || [], "@");
-		localStorage.codemirrorMethodList = getLocalList(methodList || [], "#");
-		localStorage.codemirrorNormalList = getLocalList(normalList || [], "");
-		localStorage.codemirrorKeywordList = JSON.stringify(keyWords);
-		const fArr = (fieldList || []).map(item => `@${item.name.replace(/\[/g, '\\[').replace(/\]/g, '\\]')}`);
-		const mArr = (methodList || []).map(item => `#${item.name}`);
-		const nArr = (normalList || []).map(item => item.name);
-		const keywords = [...mArr, ...nArr];
-		regExpRef.current = new RegExp(`(${keywords.join("|")})`, "g");
-		funRegExpRef.current = new RegExp(`(${keywords.sort(sortBy).join("|")})`);
-		fieldRegExpRef.current = new RegExp(`(${fArr.sort(sortBy).join("|")})`);
-	};
-
 	const CnCodeToEn = (cnCode) => {
+		const { methodList, fieldList, normalList } = fieldMapRef.current;
 		const reg = new RegExp(regExp || regExpState, "g");
 		let enCode = cnCode.replace(reg,
 			(match) => {
@@ -317,6 +321,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 	};
 
 	const EnCodeToCn = (enCode) => {
+		const { methodList, fieldList, normalList } = fieldMapRef.current;
 		const reg = new RegExp(regExp || regExpState, "g");
 		const mValueArr = (methodList || []).map(item => `#${item.realValue}`);
 		const nValueArr = (normalList || []).map(item => item.value);
