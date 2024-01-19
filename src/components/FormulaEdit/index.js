@@ -1,7 +1,5 @@
 import React, { useEffect, useState, useRef, forwardRef, useCallback } from "react";
 import * as CodeMirror from "codemirror/lib/codemirror";
-
-import "./defineScript";
 import "codemirror/mode/groovy/groovy";
 import "codemirror/mode/sql/sql";
 
@@ -11,6 +9,8 @@ import "codemirror/theme/material.css";
 
 import "codemirror/addon/display/fullscreen.css";
 import "codemirror/addon/display/fullscreen.js";
+
+import defineScript from "./defineScript";
 
 import "./index.less";
 
@@ -27,7 +27,7 @@ const sortBy = (a, b) => {
 	return 0;
 };
 let index=0;
-const getId = () => `formula-edit-${index++}`
+const getId = (type='formula-edit') => `${type}-${index++}`;
 
 const FormulaEdit = forwardRef((props, ref) => {
 	const {
@@ -71,7 +71,16 @@ const FormulaEdit = forwardRef((props, ref) => {
 	const fieldRegExpRef = useRef('');
 	const funRegExpRef = useRef('');
 	const domId = useRef(getId());
+	const modeType = useRef(getId('defineScript'));
+  const modeField = useRef();
 	const eventRef =useRef();
+
+  const _mode = mode === 'defineScript' ? modeType.current : mode;
+  useEffect(()=>{
+    if(mode === 'defineScript') {
+      defineScript(modeType.current, modeField);
+    }
+  }, [mode])
 
 	const { posLeft, posTop, tipShowType, tipShow } = curState;
 
@@ -90,10 +99,12 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 	const setLocalStorage = () => {
 		// 字段存本地，供分词高亮使用
-		localStorage.codemirrorFieldList = getLocalList(fieldList || [], "@");
-		localStorage.codemirrorMethodList = getLocalList(methodList || [], "#");
-		localStorage.codemirrorNormalList = getLocalList(normalList || [], "");
-		localStorage.codemirrorKeywordList = JSON.stringify(keyWords);
+    modeField.current = {
+      codemirrorFieldList: getLocalList(fieldList || [], "@"),
+      codemirrorMethodList: getLocalList(methodList || [], "#"),
+      codemirrorNormalList: getLocalList(normalList || [], ""),
+      codemirrorKeywordList: keyWords
+    };
 		const fArr = (fieldList || []).map(item => `@${item.name.replace(/\[/g, '\\[').replace(/\]/g, '\\]')}`);
 		const mArr = (methodList || []).map(item => `#${item.name}`);
 		const nArr = (normalList || []).map(item => item.name);
@@ -112,7 +123,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		let ops = {}
 		if (theme === "night") turnTheme = "material";
 		if (theme === "day") turnTheme = "3024-day";
-		if (mode === 'groovy') {
+		if (_mode === 'groovy') {
 			ops = {
 				mode: "text/x-groovy",
 				indentUnit: indentUnit,
@@ -148,7 +159,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 		if (!codeMirrorEditor.current) {
 			codeMirrorEditor.current = CodeMirror.fromTextArea(textareaRef.current, {
-				mode,
+				mode: _mode,
 				theme: turnTheme,
 				lineNumbers: lineNumber,
 				lineWrapping: true,
@@ -160,12 +171,12 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 		let codeValue = '';
 		if (value) codeValue = EnCodeToCn(value);
-		if (mode === 'groovy') {
+		if (_mode === 'groovy') {
 			codeMirrorEditor.current.off("changes", editorChanges);
 		}
 		codeMirrorEditor.current.setValue(codeValue);
 		codeMirrorEditor.current.setSize("auto", height);
-		if (mode === 'groovy') {
+		if (_mode === 'groovy') {
 			codeMirrorEditor.current.on("changes", editorChanges);
 		}
 
@@ -210,7 +221,8 @@ const FormulaEdit = forwardRef((props, ref) => {
 	}, [height]);
 
 	const doChange = (cnCode) => {
-		const errorKeyword = document.body.querySelector(".cm-nomal-keyword");
+    const rootDom = document.getElementById(domId.current);
+		const errorKeyword = rootDom ? rootDom.querySelector(".cm-nomal-keyword") : false;
 		let enCode = CnCodeToEn(cnCode);
 		const data = {
 			cnCode,
@@ -235,7 +247,7 @@ const FormulaEdit = forwardRef((props, ref) => {
   }, []);
 
 	useEffect(() => {
-		if (codeMirrorEditor.current && mode !== 'groovy') {
+		if (codeMirrorEditor.current && _mode !== 'groovy') {
 			let codeValue = value;
 			if (codeValue) codeValue = EnCodeToCn(codeValue);
 			codeMirrorEditor.current.off("changes", editorChanges);
@@ -288,7 +300,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		for (let i = 0; i < copyList.length; i++) {
 			codemirrorList.push(`${type}${copyList[i].name}`);
 		}
-		return JSON.stringify(codemirrorList);
+		return codemirrorList;
 	};
 
 	const CnCodeToEn = (cnCode) => {
@@ -491,7 +503,8 @@ const FormulaEdit = forwardRef((props, ref) => {
 		}
 		let findLi = "cm-field-li";
 		let active = "cm-active";
-		const nodeList = document.getElementById(domId.current).querySelectorAll(`.${findLi}`);
+    const rootDom = document.getElementById(domId.current) || document.body;
+		const nodeList = rootDom.querySelectorAll(`.${findLi}`);
 		const length = nodeList.length;
 		let index = 0;
 		let hasActive = false;
@@ -508,7 +521,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			} else {
 				nodeList[index - 1].className = `${active} ${findLi}`;
 			}
-			document.getElementById(domId.current).querySelector(`.${active}`).scrollIntoViewIfNeeded();
+			rootDom.querySelector(`.${active}`).scrollIntoViewIfNeeded();
 		} else if (type === "down") {
 			nodeList[index].setAttribute('class', findLi);
 			if (index === length - 1) {
@@ -516,7 +529,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			} else {
 				nodeList[index + 1].setAttribute('class', `${active} ${findLi}`)
 			}
-			document.getElementById(domId.current).querySelector(`.${active}`).scrollIntoViewIfNeeded();
+			rootDom.querySelector(`.${active}`).scrollIntoViewIfNeeded();
 		} else if (type === "enter") {
 			const node = document.querySelector(`.${active}`);
 			handleClick({
