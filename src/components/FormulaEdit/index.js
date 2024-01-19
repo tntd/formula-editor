@@ -71,7 +71,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 	const fieldRegExpRef = useRef('');
 	const funRegExpRef = useRef('');
 	const domId = useRef(getId());
-	const fieldMapRef =useRef({ fieldList, methodList, normalList });
+	const eventRef =useRef();
 
 	const { posLeft, posTop, tipShowType, tipShow } = curState;
 
@@ -101,7 +101,6 @@ const FormulaEdit = forwardRef((props, ref) => {
 		regExpRef.current = new RegExp(`(${keywords.join("|")})`, "g");
 		funRegExpRef.current = new RegExp(`(${keywords.sort(sortBy).join("|")})`);
 		fieldRegExpRef.current = new RegExp(`(${fArr.sort(sortBy).join("|")})`);
-		fieldMapRef.current = { fieldList, methodList, normalList };
 	};
 
 	useEffect(() => {
@@ -221,13 +220,19 @@ const FormulaEdit = forwardRef((props, ref) => {
 		props.onChange(enCode, data);
 	}
 
-	const editorChanges = useCallback((cm) => {
-		if (props.onChange) {
-			const cnCode = cm.getValue();
-			// 正则替换关键词
-			doChange(cnCode);
-		}
-	}, []);
+	eventRef.current = (cm) => {
+    if (props.onChange) {
+      const cnCode = cm.getValue();
+      // 正则替换关键词
+      doChange(cnCode);
+    }
+  };
+
+  const editorChanges = useCallback((...args) => {
+    if (eventRef.current) {
+      eventRef.current.apply(null, args);
+    }
+  }, []);
 
 	useEffect(() => {
 		if (codeMirrorEditor.current && mode !== 'groovy') {
@@ -287,7 +292,6 @@ const FormulaEdit = forwardRef((props, ref) => {
 	};
 
 	const CnCodeToEn = (cnCode) => {
-		const { methodList, fieldList, normalList } = fieldMapRef.current;
 		const reg = new RegExp(regExp || regExpState, "g");
 		let enCode = cnCode.replace(reg,
 			(match) => {
@@ -321,7 +325,6 @@ const FormulaEdit = forwardRef((props, ref) => {
 	};
 
 	const EnCodeToCn = (enCode) => {
-		const { methodList, fieldList, normalList } = fieldMapRef.current;
 		const reg = new RegExp(regExp || regExpState, "g");
 		const mValueArr = (methodList || []).map(item => `#${item.realValue}`);
 		const nValueArr = (normalList || []).map(item => item.value);
