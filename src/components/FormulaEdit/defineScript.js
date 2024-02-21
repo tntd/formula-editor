@@ -6,12 +6,8 @@
 
 import * as CodeMirror from "codemirror/lib/codemirror";
 
-(function (mod) {
-	mod(CodeMirror);
-})(function (CodeMirror) {
-	"use strict";
-
-	CodeMirror.defineMode("defineScript", function () {
+function defineScript(mode, modeField) {
+	CodeMirror.defineMode(mode, function () {
 
 		const markList = [">=", "<=", "!=", "=", ">", "<", "+", "-", "*", "/",
 			"(", ")", ";", ",", ":", "{", "}"];
@@ -48,42 +44,40 @@ import * as CodeMirror from "codemirror/lib/codemirror";
 				if (stream.match(/^"([^"]|(""))*"/)) { return "string"; }
 				if (stream.match(/^'([^']|(''))*'/)) { return "string"; }
 
+				const { 
+					codemirrorFieldList = [], 
+					codemirrorKeywordList = [], 
+					codemirrorMethodList = [], 
+					codemirrorNormalList = [] 
+				} = modeField.current || {}
 				// 处理@相关内容
-				const fieldKeywordArray = localStorage.codemirrorFieldList
-					? JSON.parse(localStorage.codemirrorFieldList) : [];
-				for (let i = 0; i < fieldKeywordArray.length; i++) {
-					if (stream.match(fieldKeywordArray[i])) {
+				for (let i = 0; i < codemirrorFieldList.length; i++) {
+					if (stream.match(codemirrorFieldList[i])) {
 						return "field-keyword";
 					}
 				}
 				// 处理@相关内容
-				const keywordsArray = localStorage.codemirrorKeywordList
-					? JSON.parse(localStorage.codemirrorKeywordList) : [];
-				for (let i = 0; i < keywordsArray.length; i++) {
-					if (stream.match(keywordsArray[i])) {
+				for (let i = 0; i < codemirrorKeywordList.length; i++) {
+					if (stream.match(codemirrorKeywordList[i])) {
 						return "keyword";
 					}
 				}
 				// if (fieldKeywordArray.length > 0 && stream.match("@")) { return "field-keyword"; }
 
 				// 处理#相关内容
-				const keywordFunctionArray = localStorage.codemirrorMethodList
-					? JSON.parse(localStorage.codemirrorMethodList) : [];
-				for (let i = 0; i < keywordFunctionArray.length; i++) {
-					if (stream.match(keywordFunctionArray[i])) {
+				for (let i = 0; i < codemirrorMethodList.length; i++) {
+					if (stream.match(codemirrorMethodList[i])) {
 						return "function-keyword";
 					}
 				}
 				// if (keywordFunctionArray.length > 0 && stream.match("#")) { return "function-keyword"; }
 
 				// 处理自定义无需校验的关键词
-				const defineNormalList = localStorage.codemirrorNormalList
-					? JSON.parse(localStorage.codemirrorNormalList) : [];
-				for (let i = 0; i < defineNormalList.length; i++) {
-					if (stream.match(defineNormalList[i])) {
+				for (let i = 0; i < codemirrorNormalList.length; i++) {
+					if (stream.match(codemirrorNormalList[i])) {
 						return "function-keyword";
 					}
-				}
+				}	
 
 				// 处理未检测到的项目
 				stream.next();
@@ -92,6 +86,7 @@ import * as CodeMirror from "codemirror/lib/codemirror";
 		};
 	});
 
-	CodeMirror.defineMIME("text/x-defineScript", "defineScript");
+	CodeMirror.defineMIME(`text/x-${mode}`, mode);
+}
 
-});
+export default defineScript;

@@ -1,7 +1,5 @@
-import React, { useEffect, useState, useRef, forwardRef } from "react";
+import React, { useEffect, useState, useRef, forwardRef, useCallback } from "react";
 import * as CodeMirror from "codemirror/lib/codemirror";
-
-import "./defineScript";
 import "codemirror/mode/groovy/groovy";
 import "codemirror/mode/sql/sql";
 
@@ -12,11 +10,24 @@ import "codemirror/theme/material.css";
 import "codemirror/addon/display/fullscreen.css";
 import "codemirror/addon/display/fullscreen.js";
 
+import defineScript from "./defineScript";
+
 import "./index.less";
 
 const beautify_js = require("js-beautify").js_beautify;
 
 import ScrollContainer from './ScrollContainer';
+const sortBy = (a, b) => {
+	if (a.length > b.length) {
+		return -1;
+	}
+	if (a.length < b.length) {
+		return 1;
+	}
+	return 0;
+};
+let index=0;
+const getId = (type='formula-edit') => `${type}-${index++}`;
 
 const FormulaEdit = forwardRef((props, ref) => {
 	const {
@@ -57,6 +68,19 @@ const FormulaEdit = forwardRef((props, ref) => {
 	const codeMirrorEditor = useRef();
 	const textareaRef = useRef();
 	const regExpRef = useRef('');
+	const fieldRegExpRef = useRef('');
+	const funRegExpRef = useRef('');
+	const domId = useRef(getId());
+	const modeType = useRef(getId('defineScript'));
+  const modeField = useRef();
+	const eventRef =useRef();
+
+  const _mode = mode === 'defineScript' ? modeType.current : mode;
+  useEffect(()=>{
+    if(mode === 'defineScript') {
+      defineScript(modeType.current, modeField);
+    }
+  }, [mode])
 
 	const { posLeft, posTop, tipShowType, tipShow } = curState;
 
@@ -73,14 +97,33 @@ const FormulaEdit = forwardRef((props, ref) => {
 		}
 	}
 
+	const setLocalStorage = () => {
+		// 字段存本地，供分词高亮使用
+    modeField.current = {
+      codemirrorFieldList: getLocalList(fieldList || [], "@"),
+      codemirrorMethodList: getLocalList(methodList || [], "#"),
+      codemirrorNormalList: getLocalList(normalList || [], ""),
+      codemirrorKeywordList: keyWords
+    };
+		const fArr = (fieldList || []).map(item => `@${item.name.replace(/\[/g, '\\[').replace(/\]/g, '\\]')}`);
+		const mArr = (methodList || []).map(item => `#${item.name}`);
+		const nArr = (normalList || []).map(item => item.name);
+		const keywords = [...mArr, ...nArr];
+		regExpRef.current = new RegExp(`(${keywords.join("|")})`, "g");
+		funRegExpRef.current = new RegExp(`(${keywords.sort(sortBy).join("|")})`);
+		fieldRegExpRef.current = new RegExp(`(${fArr.sort(sortBy).join("|")})`);
+	};
+
 	useEffect(() => {
 		setLocalStorage();
+	}, [fieldList, methodList, normalList]);
 
+	useEffect(() => {
 		let turnTheme;
 		let ops = {}
 		if (theme === "night") turnTheme = "material";
 		if (theme === "day") turnTheme = "3024-day";
-		if (mode === 'groovy') {
+		if (_mode === 'groovy') {
 			ops = {
 				mode: "text/x-groovy",
 				indentUnit: indentUnit,
@@ -104,11 +147,11 @@ const FormulaEdit = forwardRef((props, ref) => {
 						return;
 					},
 					"Ctrl-F": (cm) => {
-						const formattValue = beautify_js(cm.getValue(), {
+						const formatValue = beautify_js(cm.getValue(), {
 							indent_size: indentUnit,
 							indent_char: indentUnit === "1" ? "\t" : " "
 						});
-						codeMirrorEditor.current.setValue(formattValue);
+						codeMirrorEditor.current.setValue(formatValue);
 					}
 				}
 			}
@@ -116,7 +159,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 		if (!codeMirrorEditor.current) {
 			codeMirrorEditor.current = CodeMirror.fromTextArea(textareaRef.current, {
-				mode,
+				mode: _mode,
 				theme: turnTheme,
 				lineNumbers: lineNumber,
 				lineWrapping: true,
@@ -128,11 +171,12 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 		let codeValue = '';
 		if (value) codeValue = EnCodeToCn(value);
+		if (_mode === 'groovy') {
+			codeMirrorEditor.current.off("changes", editorChanges);
+		}
 		codeMirrorEditor.current.setValue(codeValue);
 		codeMirrorEditor.current.setSize("auto", height);
-
-		if (mode === 'groovy') {
-			codeMirrorEditor.current.off("changes", editorChanges);
+		if (_mode === 'groovy') {
 			codeMirrorEditor.current.on("changes", editorChanges);
 		}
 
@@ -177,32 +221,37 @@ const FormulaEdit = forwardRef((props, ref) => {
 	}, [height]);
 
 	const doChange = (cnCode) => {
-		const errorkeyword = document.body.querySelector(".cm-nomal-keyword");
+    const rootDom = document.getElementById(domId.current);
+		const errorKeyword = rootDom ? rootDom.querySelector(".cm-nomal-keyword") : false;
 		let enCode = CnCodeToEn(cnCode);
 		const data = {
 			cnCode,
 			enCode,
-			errorMsg: errorkeyword ? "存在错误代码" : null
+			errorMsg: errorKeyword ? "存在错误代码" : null
 		};
 		props.onChange(enCode, data);
 	}
 
-	const editorChanges = (cm) => {
-		if (props.onChange) {
-			const cnCode = cm.getValue();
-			// 正则替换关键词
-			doChange(cnCode);
-		}
-	}
+	eventRef.current = (cm) => {
+    if (props.onChange) {
+      const cnCode = cm.getValue();
+      // 正则替换关键词
+      doChange(cnCode);
+    }
+  };
+
+  const editorChanges = useCallback((...args) => {
+    if (eventRef.current) {
+      eventRef.current.apply(null, args);
+    }
+  }, []);
 
 	useEffect(() => {
-		if (codeMirrorEditor.current && mode !== 'groovy') {
-			setLocalStorage();
+		if (codeMirrorEditor.current && _mode !== 'groovy') {
 			let codeValue = value;
 			if (codeValue) codeValue = EnCodeToCn(codeValue);
-			codeMirrorEditor.current.setValue(codeValue);
-
 			codeMirrorEditor.current.off("changes", editorChanges);
+			codeMirrorEditor.current.setValue(codeValue);
 			codeMirrorEditor.current.on("changes", editorChanges);
 
 			codeMirrorEditor.current.on("cursorActivity", (cm) => {
@@ -235,7 +284,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		// codeMirrorEditor.current.focus();
 	}
 
-	const getLoacalList = (list, type) => {
+	const getLocalList = (list, type) => {
 		const copyList = Object.assign([], list);
 		// 排序，把长的放前面
 		copyList.sort((a, b) => {
@@ -251,19 +300,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		for (let i = 0; i < copyList.length; i++) {
 			codemirrorList.push(`${type}${copyList[i].name}`);
 		}
-		return JSON.stringify(codemirrorList);
-	};
-
-	const setLocalStorage = () => {
-		// 字段存本地，供分词高亮使用
-		localStorage.codemirrorFieldList = getLoacalList(fieldList || [], "@");
-		localStorage.codemirrorMethodList = getLoacalList(methodList || [], "#");
-		localStorage.codemirrorNormalList = getLoacalList(normalList || [], "");
-		localStorage.codemirrorKeywordList = JSON.stringify(keyWords);
-		const mArr = (methodList || []).map(item => `#${item.name}`);
-		const nArr = (normalList || []).map(item => item.name);
-		const keywords = [...mArr, ...nArr].join("|");
-		regExpRef.current = new RegExp(`(${keywords})`, "g");
+		return codemirrorList;
 	};
 
 	const CnCodeToEn = (cnCode) => {
@@ -408,17 +445,43 @@ const FormulaEdit = forwardRef((props, ref) => {
 	};
 
 	const handleClick = (item, type) => {
-		const getCursor = codeMirrorEditor.current.getCursor();
-		const getLineInfo = codeMirrorEditor.current.getLine(getCursor.line);
-		const cursorBeforeOneChar = getLineInfo.substring(0, getCursor.ch);
-		const lastIndex = cursorBeforeOneChar.lastIndexOf(type, getCursor.ch);
+		const getCursor = codeMirrorEditor.current.getCursor(); // 焦点
+		const getLineInfo = codeMirrorEditor.current.getLine(getCursor.line);  // 当前行数据
+		const cursorBeforeOneChar = getLineInfo.substring(0, getCursor.ch);  // 起始到当前焦点数据
+		const lastIndex = cursorBeforeOneChar.lastIndexOf(type, getCursor.ch);  // 最后一个标记位置
+		const cursorAfterOneChar = getLineInfo.substring(lastIndex, getLineInfo.length);  // 最后一个标记到结尾数据
+		let endIndex = getCursor.ch;
+		if (type === "@" || type === "#") {
+			const regExpRef = type === "@" ? fieldRegExpRef.current : funRegExpRef.current;
+			const match = cursorAfterOneChar.match(regExpRef);
+			if (match && match.index === 0) { // 第一个匹配的
+				endIndex = lastIndex + match[0].length;
+			}
+		}
 		codeMirrorEditor.current.setSelection(
 			{ line: getCursor.line, ch: lastIndex + 1 },
-			{ line: getCursor.line, ch: getCursor.ch },
+			{ line: getCursor.line, ch: endIndex },
 		);
-		let content = type === "@" ? item.name + (isEndMark ? '@' : '') : item.value;
+		let content = "";
+		let offsetIndex = 0;
+		if (type === "@") {
+			content = item.name + (isEndMark ? '@' : '');
+			// 好像不通用，暂时隐藏
+			// if ([',', ')'].includes(getLineInfo[endIndex])) {
+			// 	// 如果后面是逗号或者括号，聚焦到后面
+			// 	offsetIndex = 1;
+			// }
+		} else if (type === "#" && getLineInfo.length > endIndex) {
+			content = item.name;
+		} else {
+			content = item.value;
+		}
+		if (type === "#" && content.includes(',')) {
+			// 函数聚焦到逗号前面
+			offsetIndex = content.indexOf(',') - content.length;
+		}
 		codeMirrorEditor.current.replaceSelection(content);
-		codeMirrorEditor.current.setCursor(getCursor.line, lastIndex + 1 + content.length);
+		codeMirrorEditor.current.setCursor(getCursor.line, lastIndex + 1 + content.length + offsetIndex);
 		codeMirrorEditor.current.focus();
 		setCurState({
 			...curState,
@@ -440,7 +503,8 @@ const FormulaEdit = forwardRef((props, ref) => {
 		}
 		let findLi = "cm-field-li";
 		let active = "cm-active";
-		const nodeList = document.querySelector('.box-ul').querySelectorAll(`.${findLi}`);
+    const rootDom = document.getElementById(domId.current) || document.body;
+		const nodeList = rootDom.querySelectorAll(`.${findLi}`);
 		const length = nodeList.length;
 		let index = 0;
 		let hasActive = false;
@@ -457,7 +521,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			} else {
 				nodeList[index - 1].className = `${active} ${findLi}`;
 			}
-			document.querySelector('.box-ul').querySelector(`.${active}`).scrollIntoViewIfNeeded();
+			rootDom.querySelector(`.${active}`).scrollIntoViewIfNeeded();
 		} else if (type === "down") {
 			nodeList[index].setAttribute('class', findLi);
 			if (index === length - 1) {
@@ -465,7 +529,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 			} else {
 				nodeList[index + 1].setAttribute('class', `${active} ${findLi}`)
 			}
-			document.querySelector('.box-ul').querySelector(`.${active}`).scrollIntoViewIfNeeded();
+			rootDom.querySelector(`.${active}`).scrollIntoViewIfNeeded();
 		} else if (type === "enter") {
 			const node = document.querySelector(`.${active}`);
 			handleClick({
@@ -506,6 +570,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 						...selectStyle
 					}}
 					lang={lang}
+					domId={domId.current}
 				/>
 			) : ''}
 		</div>

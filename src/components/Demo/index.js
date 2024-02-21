@@ -130,9 +130,9 @@ export default props => {
         // theme="night" // 主题 默认night
         height={height} // 高度 默认300
       />
-       <FormulaEdit
-       placeholder="87878778"
-        value={code} //传入组件自动转化成cnCode*/
+      {/* <FormulaEdit
+        placeholder="87878778"
+        value={code} //传入组件自动转化成cnCode
         mode={'groovy'}
         onChange={(enCode, data) => {
           console.log('onChange---------1')
@@ -142,8 +142,8 @@ export default props => {
         }} // 回调
         height={height} // 高度 默认300
       />
-       <FormulaEdit
-        value={code} //传入组件自动转化成cnCode*/
+      <FormulaEdit
+        value={code} //传入组件自动转化成cnCode
         fieldList={list} // @唤起
         mode={'sql'}
         isEndMark
@@ -156,7 +156,7 @@ export default props => {
         }} // 回调
         // theme="day" // 主题 默认night
         height={height} // 高度 默认300
-      />
+      /> */}
       <button onClick={() => {
         console.log(formulaRef);
         formulaRef.current.fullScreen();
