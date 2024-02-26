@@ -109,9 +109,8 @@ export default props => {
         // regRxp="@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*" //中文转英文默认正则
         methodList={list1} // @唤起
         onChange={(enCode, data) => {
-          console.log('onChange---------1')
           console.log(data)
-          console.log('onChange---------2')
+          console.log('onChange---------1')
           setCode(enCode);
         }} // 回调
         // normalList={normalList}

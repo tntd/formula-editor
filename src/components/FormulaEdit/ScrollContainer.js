@@ -6,27 +6,25 @@ import { getTypeMap } from './otp';
 
 const firstItemClass = 'li-first', lastItemClass = 'li-last';
 const ScrollContainer = props => {
-	const { style, dropList, theme, selectChange, listLen, listSize, itemHeight, typeMap, lang, domId } = props;
+  const { style, dropList, theme, selectChange, listLen, listSize, itemHeight, typeMap, lang, domId } = props;
   const halfListSize = Math.floor(listSize / 2);
-  let box = null, intersectionObserver = null, lastRenderIndex = 0, currentIndex=0,
-      firstItem = null, lastItem = null, lastScrollTop = 0;
+  let box = null, intersectionObserver = null, lastRenderIndex = 0, currentIndex = 0,
+    firstItem = null, lastItem = null, lastScrollTop = 0;
 
   const TYPE_MAP = getTypeMap(lang);
 
-	useEffect(() => {
-	  // console.log('dropList-----')
-	  // console.log(dropList)
-	  window.currentIndex = currentIndex;
-    if (listLen<=listSize) {
-      renderList(0,listLen);
+  useEffect(() => {
+    window.currentIndex = currentIndex;
+    if (listLen <= listSize) {
+      renderList(0, listLen);
       const container = document.getElementById(domId);
-      listLen&&container&&container.children&&container.children[0].classList.add('cm-active');
+      listLen && container && container.children && container.children[0].classList.add('cm-active');
     } else {
       // 创建 intersectionObserver 对象
       intersectionObserver = new IntersectionObserver(entries => {
         for (const entry of entries) {
           if (!entry.isIntersecting) return false;
-          if (currentIndex&&entry.target.classList.contains(firstItemClass)) {
+          if (currentIndex && entry.target.classList.contains(firstItemClass)) {
             // console.log('向上滑动')
             handleScroll(false);
           } else if (entry.target.classList.contains(lastItemClass)) {
@@ -39,35 +37,35 @@ const ScrollContainer = props => {
       // 用户大幅度滚动时则使用scroll兼容方案
       polyScroll();
     }
-		return ()=>{
+    return () => {
       // console.log('清除')
-      firstItem&&intersectionObserver&&intersectionObserver.unobserve(firstItem);
-      lastItem&&intersectionObserver&&intersectionObserver.unobserve(lastItem);
-      intersectionObserver&&intersectionObserver.disconnect();
+      firstItem && intersectionObserver && intersectionObserver.unobserve(firstItem);
+      lastItem && intersectionObserver && intersectionObserver.unobserve(lastItem);
+      intersectionObserver && intersectionObserver.disconnect();
       init();
     }
-	},[dropList]);
+  }, [dropList]);
 
   useEffect(() => {
     const container = document.getElementById(domId);
     container.addEventListener("click", (e) => {
       const value = e.target.getAttribute('data-value')
       const name = e.target.getAttribute('data-name')
-      selectChange({name, value});
+      selectChange({ name, value });
     });
     return () => {
-      container.removeEventListener("click", () => {});
+      container.removeEventListener("click", () => { });
     }
   }, [])
 
-	const init = () => {
+  const init = () => {
     const container = document.getElementById(domId);
     container.style.paddingTop = `0px`;
     container.style.paddingBottom = `0px`;
     box = null;
     intersectionObserver = null;
     lastRenderIndex = 0;
-    currentIndex=0;
+    currentIndex = 0;
     lastScrollTop = 0;
     firstItem = null;
     lastItem = null;
@@ -76,7 +74,7 @@ const ScrollContainer = props => {
 
   const polyScroll = () => {
     const box = document.querySelector('.scroll-container');
-    const boxHeight = box&&box.offsetHeight;
+    const boxHeight = box && box.offsetHeight;
     const baseHeight = itemHeight * halfListSize - itemHeight - boxHeight;
     box.onscroll = e => {
       const currentScrollTop = e.target.scrollTop;
@@ -85,7 +83,7 @@ const ScrollContainer = props => {
         let firstIndex = Math.floor(Math.abs(currentScrollTop - baseHeight) / (itemHeight * halfListSize)) * halfListSize;
         const lastIndex = getContainerLastIndex();
         firstIndex = firstIndex > lastIndex ? lastIndex : firstIndex;
-        if(firstIndex !== window.currentIndex) scrollCallback(firstIndex, true);
+        if (firstIndex !== window.currentIndex) scrollCallback(firstIndex, true);
         lastScrollTop = currentScrollTop;
       }
       if (currentScrollTop - lastScrollTop <= -itemHeight) {
@@ -100,14 +98,14 @@ const ScrollContainer = props => {
   const initFirstItems = () => {
     renderList(0, listSize)
     adjustPaddings(0);
-    setTimeout(()=>{
+    setTimeout(() => {
       bindNewItems();
-    },100);
+    }, 100);
   };
 
-	const renderList = (firstIndex, listSize)=>{
-    const newTypeMap = {...TYPE_MAP, ...typeMap}
-		let currentList = JSON.parse(JSON.stringify(dropList));
+  const renderList = (firstIndex, listSize) => {
+    const newTypeMap = { ...TYPE_MAP, ...typeMap }
+    let currentList = JSON.parse(JSON.stringify(dropList));
     currentList = currentList.splice(firstIndex, listSize);
     const container = document.getElementById(domId);
     let list = ``;
@@ -118,29 +116,29 @@ const ScrollContainer = props => {
     };
     container.innerHTML = '';
     container.innerHTML = list;
-	};
+  };
 
   const bindNewItems = (isScrollDown) => {
-  	const container = document.getElementById(domId);
-    firstItem && intersectionObserver&&intersectionObserver.unobserve(firstItem);
-    lastItem && intersectionObserver&&intersectionObserver.unobserve(lastItem);
-    if(container&&container.children&&container.children.length){
+    const container = document.getElementById(domId);
+    firstItem && intersectionObserver && intersectionObserver.unobserve(firstItem);
+    lastItem && intersectionObserver && intersectionObserver.unobserve(lastItem);
+    if (container && container.children && container.children.length) {
       container.children[0].classList.add(firstItemClass);
       //start-键盘移动添加active属性 上下移动位置不同
       let newInd = 0;
-      if(isScrollDown&&window.currentIndex){
-        newInd = (window.currentIndex/10)%2>0?8:7;
+      if (isScrollDown && window.currentIndex) {
+        newInd = (window.currentIndex / 10) % 2 > 0 ? 8 : 7;
       };
-      if(isScrollDown === false){
-        newInd = (window.currentIndex/10)%2>0?13:11;
+      if (isScrollDown === false) {
+        newInd = (window.currentIndex / 10) % 2 > 0 ? 13 : 11;
       };
-      container&&container.children&&container.children[newInd]&&container.children[newInd].classList.add('cm-active');
+      container && container.children && container.children[newInd] && container.children[newInd].classList.add('cm-active');
       //-end
       container.children[container.children.length - 1].classList.add(lastItemClass);
       const newFirstItem = container.querySelector(`.${firstItemClass}`);
       const newLastItem = container.querySelector(`.${lastItemClass}`);
-      intersectionObserver&&intersectionObserver.observe(newFirstItem);
-      intersectionObserver&&intersectionObserver.observe(newLastItem);
+      intersectionObserver && intersectionObserver.observe(newFirstItem);
+      intersectionObserver && intersectionObserver.observe(newLastItem);
       firstItem = newFirstItem;
       lastItem = newLastItem;
     }
@@ -199,17 +197,17 @@ const ScrollContainer = props => {
     container.style.paddingTop = `${newCurrentPaddingTop}px`;
     container.style.paddingBottom = `${newCurrentPaddingBottom}px`;
   };
-	return (
-		<div
-			className={`codemirror-tip-${theme} scroll-container`}
-			style={{
-				...style
-			}}
+  return (
+    <div
+      className={`codemirror-tip-${theme} scroll-container`}
+      style={{
+        ...style
+      }}
       id="scrollDiv"
-		>
-			<ul className="cm-field-ul box-ul" ref={e => box=e} id={domId}/>
-		</div>
-	);
+    >
+      <ul className="cm-field-ul box-ul" ref={e => box = e} id={domId} />
+    </div>
+  );
 };
 
 export default ScrollContainer;

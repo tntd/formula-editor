@@ -94,7 +94,7 @@ const enCodeToCnExtraLogic = (enCode) => {
 | defaultValue | string  |  无      |   非必填    | 初始化赋值  2.0已废弃   |
 | value | string  |  无      |   非必填    | 赋值  传入组件自动转化成cnCode |
 | height    | number  |  300     |   非必填  | 高度设置       |
-| theme    | string  |  day     |   非必填  | 主题: 目前只支持两种：day，night |
+| theme    | string  |  night     |   非必填  | 主题: 目前只支持两种：day，night |
 | readOnly  | boolean |  false   |   非必填  | 设置只读       |
 | lineNumber  | boolean |  false   |   非必填  | 设置行号       |
 | typeMap | object   |  无      |   非必填  | 自定义变量类型和颜色       |

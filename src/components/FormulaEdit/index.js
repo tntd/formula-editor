@@ -17,6 +17,7 @@ import "./index.less";
 const beautify_js = require("js-beautify").js_beautify;
 
 import ScrollContainer from './ScrollContainer';
+//输入
 const sortBy = (a, b) => {
 	if (a.length > b.length) {
 		return -1;
@@ -26,8 +27,9 @@ const sortBy = (a, b) => {
 	}
 	return 0;
 };
-let index=0;
-const getId = (type='formula-edit') => `${type}-${index++}`;
+
+let index = 0;
+const getId = (type = 'formula-edit') => `${type}-${index++}`;
 
 const FormulaEdit = forwardRef((props, ref) => {
 	const {
@@ -45,14 +47,14 @@ const FormulaEdit = forwardRef((props, ref) => {
 		isEndMark,
 		height = 300,
 		fieldList,
-		typeMap={},
+		typeMap = {},
 		keyWords = ["int", "double", "string", "list", "boolean", "if", "else", "and", "or", "return"],
 		methodList,
 		normalList,
 		editorEvent,
 		placeholder,
-        cnCodeToEnExtraLogic,
-        enCodeToCnExtraLogic,
+		cnCodeToEnExtraLogic,
+		enCodeToCnExtraLogic,
 		lang,
 		...rest
 	} = props;
@@ -72,15 +74,15 @@ const FormulaEdit = forwardRef((props, ref) => {
 	const funRegExpRef = useRef('');
 	const domId = useRef(getId());
 	const modeType = useRef(getId('defineScript'));
-  const modeField = useRef();
-	const eventRef =useRef();
+	const modeField = useRef();
+	const eventRef = useRef();
 
-  const _mode = mode === 'defineScript' ? modeType.current : mode;
-  useEffect(()=>{
-    if(mode === 'defineScript') {
-      defineScript(modeType.current, modeField);
-    }
-  }, [mode])
+	const _mode = mode === 'defineScript' ? modeType.current : mode;
+	useEffect(() => {
+		if (mode === 'defineScript') {
+			defineScript(modeType.current, modeField);
+		}
+	}, [mode])
 
 	const { posLeft, posTop, tipShowType, tipShow } = curState;
 
@@ -99,12 +101,12 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 	const setLocalStorage = () => {
 		// 字段存本地，供分词高亮使用
-    modeField.current = {
-      codemirrorFieldList: getLocalList(fieldList || [], "@"),
-      codemirrorMethodList: getLocalList(methodList || [], "#"),
-      codemirrorNormalList: getLocalList(normalList || [], ""),
-      codemirrorKeywordList: keyWords
-    };
+		modeField.current = {
+			codemirrorFieldList: getLocalList(fieldList || [], "@"),
+			codemirrorMethodList: getLocalList(methodList || [], "#"),
+			codemirrorNormalList: getLocalList(normalList || [], ""),
+			codemirrorKeywordList: keyWords
+		};
 		const fArr = (fieldList || []).map(item => `@${item.name.replace(/\[/g, '\\[').replace(/\]/g, '\\]')}`);
 		const mArr = (methodList || []).map(item => `#${item.name}`);
 		const nArr = (normalList || []).map(item => item.name);
@@ -182,7 +184,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 		editorEvent && editorEvent({ codeEditor: codeMirrorEditor.current, fullScreen, exitFullScreen, EnCodeToCn, CnCodeToEn });
 
-		return () => {}
+		return () => { }
 	}, []);
 
 	useEffect(() => {
@@ -221,8 +223,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 	}, [height]);
 
 	const doChange = (cnCode) => {
-    const rootDom = document.getElementById(domId.current);
-		const errorKeyword = rootDom ? rootDom.querySelector(".cm-nomal-keyword") : false;
+		const errorKeyword = document.body.querySelector(".cm-nomal-keyword");
 		let enCode = CnCodeToEn(cnCode);
 		const data = {
 			cnCode,
@@ -233,18 +234,18 @@ const FormulaEdit = forwardRef((props, ref) => {
 	}
 
 	eventRef.current = (cm) => {
-    if (props.onChange) {
-      const cnCode = cm.getValue();
-      // 正则替换关键词
-      doChange(cnCode);
-    }
-  };
+		if (props.onChange) {
+			const cnCode = cm.getValue();
+			// 正则替换关键词
+			doChange(cnCode);
+		}
+	};
 
-  const editorChanges = useCallback((...args) => {
-    if (eventRef.current) {
-      eventRef.current.apply(null, args);
-    }
-  }, []);
+	const editorChanges = useCallback((...args) => {
+		if (eventRef.current) {
+			eventRef.current.apply(null, args);
+		}
+	}, []);
 
 	useEffect(() => {
 		if (codeMirrorEditor.current && _mode !== 'groovy') {
@@ -310,15 +311,15 @@ const FormulaEdit = forwardRef((props, ref) => {
 				let turnStr = match.replace(/^\s*|\s*$/g, "");
 				const fItem = (fieldList || []).find(item => `@${item.name}` === turnStr);
 				if (fItem) {
-                    turnStr = `@${fItem.value}`;
+					turnStr = `@${fItem.value}`;
 
-                    if (cnCodeToEnExtraLogic) {
-                        const cnCodeTemp = cnCodeToEnExtraLogic(fItem);
-                        if (cnCodeTemp) {
-                            turnStr = cnCodeTemp + turnStr;
-                        }
-                    }
-                }
+					if (cnCodeToEnExtraLogic) {
+						const cnCodeTemp = cnCodeToEnExtraLogic(fItem);
+						if (cnCodeTemp) {
+							turnStr = cnCodeTemp + turnStr;
+						}
+					}
+				}
 				return turnStr;
 			}
 		);
@@ -352,12 +353,12 @@ const FormulaEdit = forwardRef((props, ref) => {
 			}
 		);
 
-        if (enCodeToCnExtraLogic) {
-            const cnCodeTemp = enCodeToCnExtraLogic(cnCode);
-            if (cnCodeTemp) {
-                cnCode = cnCodeTemp;
-            }
-        }
+		if (enCodeToCnExtraLogic) {
+			const cnCodeTemp = enCodeToCnExtraLogic(cnCode);
+			if (cnCodeTemp) {
+				cnCode = cnCodeTemp;
+			}
+		}
 
 		cnCode = cnCode.replace(
 			regExp,
@@ -503,7 +504,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 		}
 		let findLi = "cm-field-li";
 		let active = "cm-active";
-    const rootDom = document.getElementById(domId.current) || document.body;
+		const rootDom = document.getElementById(domId.current) || document.body;
 		const nodeList = rootDom.querySelectorAll(`.${findLi}`);
 		const length = nodeList.length;
 		let index = 0;
@@ -547,7 +548,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 	};
 
 	return (
-		<div className="m-codemirror">
+		<div className="tnt-codemirror">
 			{children}
 			<textarea ref={textareaRef} />
 			{placeholder && !value && <a className="placeholder">{placeholder}</a>}
