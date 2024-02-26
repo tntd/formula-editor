@@ -17,7 +17,7 @@ import "./index.less";
 const beautify_js = require("js-beautify").js_beautify;
 
 import ScrollContainer from './ScrollContainer';
-//输入
+//输入字段&函数排序先匹配最长的
 const sortBy = (a, b) => {
 	if (a.length > b.length) {
 		return -1;
