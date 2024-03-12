@@ -69,10 +69,10 @@ const FormulaEdit = forwardRef((props, ref) => {
 	const [regExpState, setRegExpState] = useState('@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*');
 	const codeMirrorEditor = useRef();
 	const textareaRef = useRef();
-	const regExpRef = useRef('');
 	const fieldRegExpRef = useRef('');
 	const funRegExpRef = useRef('');
-    const normalExpRef = useRef('')
+    const funRegExpGRef = useRef('');
+    const normalExpGRef = useRef('')
 	const domId = useRef(getId());
 	const modeType = useRef(getId('defineScript'));
 	const modeField = useRef();
@@ -109,13 +109,13 @@ const FormulaEdit = forwardRef((props, ref) => {
 			codemirrorKeywordList: keyWords
 		};
 		const fArr = (fieldList || []).map(item => `@${item.name.replace(/\[/g, '\\[').replace(/\]/g, '\\]')}`);
-		const mArr = (methodList || []).map(item => `#${item.name}`);
-		const nArr = (normalList || []).map(item => item.name);
-		const keywords = [...mArr]; // , ...nArr
-		regExpRef.current = new RegExp(`(${keywords.join("|")})`, "g");
-		funRegExpRef.current = new RegExp(`(${keywords.sort(sortBy).join("|")})`);
+		const mArr = (methodList || []).map(item => `#${item.name}`).sort(sortBy);
+		const nArr = (normalList || []).map(item => item.name).sort(sortBy);
+        // const keywords = [...mArr, ...nArr];
 		fieldRegExpRef.current = new RegExp(`(${fArr.sort(sortBy).join("|")})`);
-        normalExpRef.current = new RegExp(`(?<!['"])(${nArr.join("|")})`, "g");// normal 不能以引号开头
+		funRegExpRef.current = new RegExp(`(${mArr.join("|")})`);
+		funRegExpGRef.current = new RegExp(`(${mArr.join("|")})`, "g");
+        normalExpGRef.current = new RegExp(`(?<!['"])(${nArr.join("|")})`, "g");// normal 不能以引号开头
 	};
 
 	useEffect(() => {
@@ -326,19 +326,17 @@ const FormulaEdit = forwardRef((props, ref) => {
 			}
 		);
 		enCode = enCode.replace(
-			regExpRef.current,
+			funRegExpGRef.current,
 			(match) => {
 				let turnStr = match;
 				const mItem = (methodList || []).find(item => `#${item.name}` === match);
 				if (mItem) turnStr = `#${mItem.realValue}`;
-				// const nItem = (normalList || []).find(item => item.name === match);
-				// if (nItem) turnStr = nItem.value;
 				return turnStr;
 			}
 		);
 
         enCode = enCode.replace(
-			normalExpRef.current,
+			normalExpGRef.current,
 			(match) => {
                 let turnStr = match;
 				const nItem = (normalList || []).find(item => item.name === match);
