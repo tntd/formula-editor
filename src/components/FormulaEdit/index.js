@@ -72,6 +72,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 	const regExpRef = useRef('');
 	const fieldRegExpRef = useRef('');
 	const funRegExpRef = useRef('');
+    const normalExpRef = useRef('')
 	const domId = useRef(getId());
 	const modeType = useRef(getId('defineScript'));
 	const modeField = useRef();
@@ -110,10 +111,11 @@ const FormulaEdit = forwardRef((props, ref) => {
 		const fArr = (fieldList || []).map(item => `@${item.name.replace(/\[/g, '\\[').replace(/\]/g, '\\]')}`);
 		const mArr = (methodList || []).map(item => `#${item.name}`);
 		const nArr = (normalList || []).map(item => item.name);
-		const keywords = [...mArr, ...nArr];
+		const keywords = [...mArr]; // , ...nArr
 		regExpRef.current = new RegExp(`(${keywords.join("|")})`, "g");
 		funRegExpRef.current = new RegExp(`(${keywords.sort(sortBy).join("|")})`);
 		fieldRegExpRef.current = new RegExp(`(${fArr.sort(sortBy).join("|")})`);
+        normalExpRef.current = new RegExp(`(?<!['"])(${nArr.join("|")})`, "g");// normal 不能以引号开头
 	};
 
 	useEffect(() => {
@@ -329,6 +331,16 @@ const FormulaEdit = forwardRef((props, ref) => {
 				let turnStr = match;
 				const mItem = (methodList || []).find(item => `#${item.name}` === match);
 				if (mItem) turnStr = `#${mItem.realValue}`;
+				// const nItem = (normalList || []).find(item => item.name === match);
+				// if (nItem) turnStr = nItem.value;
+				return turnStr;
+			}
+		);
+
+        enCode = enCode.replace(
+			normalExpRef.current,
+			(match) => {
+                let turnStr = match;
 				const nItem = (normalList || []).find(item => item.name === match);
 				if (nItem) turnStr = nItem.value;
 				return turnStr;

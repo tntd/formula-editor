@@ -82,6 +82,9 @@ export default props => {
   double d=777.324;
   boolean x = a >= 0;
   list result = [x, d, 333];
+  "或为空";
+  且
+  或
   `);
   const [height, setHeight] = useState(300);
 
@@ -113,7 +116,7 @@ export default props => {
           console.log('onChange---------1')
           setCode(enCode);
         }} // 回调
-        // normalList={normalList}
+        normalList={normalList}
         editorEvent={(event) => {
           formulaRef.current = event;
         }}
