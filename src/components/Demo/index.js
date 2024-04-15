@@ -32,7 +32,7 @@ import FormulaEdit from '../FormulaEdit';
 const testData = [];
 for (let i = 0; i < 800; i++) {
   testData.push(
-    { name: `[字段]测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试测试哈哈哈信贷测试${i}`, value: `hahahdsdhjbewdbu${i}`, type: 'DOUBLE' }
+    { name: `[字段]测试试${i}`, value: `hahahdsdhjbewdbu${i}`, type: 'DOUBLE', prefix: 'sa', }
   );
 }
 testData.push(
@@ -111,6 +111,7 @@ export default props => {
         fieldList={list} // @唤起
         // regRxp="@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*" //中文转英文默认正则
         methodList={list1} // @唤起
+        pr
         onChange={(enCode, data) => {
           console.log(data)
           console.log('onChange---------1')
