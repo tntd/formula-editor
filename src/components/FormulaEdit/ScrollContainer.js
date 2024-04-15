@@ -23,6 +23,7 @@ const ScrollContainer = (props) => {
   useEffect(() => {
     window.currentIndex = currentIndex;
     if (listLen <= listSize) {
+      debugger
       renderList(0, listLen);
       const container = document.getElementById(domId);
       listLen && container && container.children && container.children[0].classList.add('cm-active');
@@ -56,18 +57,14 @@ const ScrollContainer = (props) => {
   useEffect(() => {
     const container = document.getElementById(domId);
     container.addEventListener('click', (e) => {
-        let curr = e.target;
-        while (!curr.getAttribute('data-value')) {
-            curr = curr.parentNode;
-        }
-        const value = curr.getAttribute('data-value');
-        const name = curr.getAttribute('data-name');
-        selectChange({ name, value });
+      const value = e.target.getAttribute('data-value') || e.target.parentNode.getAttribute('data-value');
+      const name = e.target.getAttribute('data-name') || e.target.parentNode.getAttribute('data-name');
+      selectChange({ name, value });
     });
     return () => {
-        container.removeEventListener('click', () => { });
+      container.removeEventListener('click', () => { });
     };
-}, []);
+  }, []);
 
   const init = () => {
     const container = document.getElementById(domId);
@@ -116,19 +113,19 @@ const ScrollContainer = (props) => {
 
   const renderList = (firstIndex, listSize) => {
     const newTypeMap = { ...TYPE_MAP, ...typeMap };
-    let currentList = dropList;
+    let currentList = JSON.parse(JSON.stringify(dropList));
     currentList = currentList.splice(firstIndex, listSize);
     const container = document.getElementById(domId);
-    container.style.display = 'none';
+    // container.style.display = 'none';
     const listItems = [];
     for (let i = 0; i < currentList.length; i++) {
       let item = currentList[i];
       const dataTypeObj = newTypeMap[item.type] ? newTypeMap[item.type] : '';
       let listItemContent;
       listItemContent = (
-        <li key={item.value} className="cm-field-li" data-value={item.value} title={item.name} data={item.value} data-name={item.name}>
+        <li key={i} className="cm-field-li" data-value={item.value} title={item.name} data={item.value} data-name={item.name}>
           {dataTypeObj && <sup style={{ color: dataTypeObj.color }}>{dataTypeObj.displayName}</sup>}
-          {item.prefix ? item.prefix : ''}
+          {item.prefix}
           {item.name}
         </li>
       );
@@ -136,6 +133,7 @@ const ScrollContainer = (props) => {
       listItems.push(listItemContent); // Push each list item component to the array
     }
     // eslint-disable-next-line react/no-deprecated
+    ReactDOM.render(null, container); //
     ReactDOM.render(listItems, container); //
     container.style.display = 'block';
   };
