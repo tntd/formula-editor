@@ -23,7 +23,6 @@ const ScrollContainer = (props) => {
   useEffect(() => {
     window.currentIndex = currentIndex;
     if (listLen <= listSize) {
-      debugger
       renderList(0, listLen);
       const container = document.getElementById(domId);
       listLen && container && container.children && container.children[0].classList.add('cm-active');
@@ -116,7 +115,7 @@ const ScrollContainer = (props) => {
     let currentList = JSON.parse(JSON.stringify(dropList));
     currentList = currentList.splice(firstIndex, listSize);
     const container = document.getElementById(domId);
-    // container.style.display = 'none';
+    container.style.display = 'none';
     const listItems = [];
     for (let i = 0; i < currentList.length; i++) {
       let item = currentList[i];
