@@ -25,7 +25,7 @@ const ScrollContainer = (props) => {
     if (listLen <= listSize) {
       renderList(0, listLen);
       const container = document.getElementById(domId);
-      listLen && container && container.children && container.children[0].classList.add('cm-active');
+      listLen && container && container.children && Array.isArray(container.children) && container.children[0].classList.add('cm-active');
     } else {
       // 创建 intersectionObserver 对象
       intersectionObserver = new IntersectionObserver((entries) => {
@@ -56,8 +56,12 @@ const ScrollContainer = (props) => {
   useEffect(() => {
     const container = document.getElementById(domId);
     container.addEventListener('click', (e) => {
-      const value = e.target.getAttribute('data-value') || e.target.parentNode.getAttribute('data-value');
-      const name = e.target.getAttribute('data-name') || e.target.parentNode.getAttribute('data-name');
+      let curr = e.target;
+      while (!curr.getAttribute('data-value')) {
+        curr = curr.parentNode;
+      }
+      const value = curr.getAttribute('data-value');
+      const name = curr.getAttribute('data-name');
       selectChange({ name, value });
     });
     return () => {
