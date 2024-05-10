@@ -27,7 +27,7 @@
     "js-beautify": "^1.13.13",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "universal-cookie": "^6.1.1"
+    "universal-cookie": "^4.0.4"
   },
   "devDependencies": {
     "@babel/core": "7.2.2",
