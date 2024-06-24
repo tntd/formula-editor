@@ -71,8 +71,11 @@ const ScrollContainer = (props) => {
 
   const init = () => {
     const container = document.getElementById(domId);
-    container.style.paddingTop = '0px';
-    container.style.paddingBottom = '0px';
+    const scroll = document.querySelector('.scroll-container');
+    if (container) {
+      container.style.paddingTop = '0px';
+      container.style.paddingBottom = '0px';
+    }
     box = null;
     intersectionObserver = null;
     lastRenderIndex = 0;
@@ -80,7 +83,9 @@ const ScrollContainer = (props) => {
     lastScrollTop = 0;
     firstItem = null;
     lastItem = null;
-    document.querySelector('.scroll-container').scrollTop = 0;
+    if (scroll) {
+      scroll.scrollTop = 0;
+    }
   };
 
   const polyScroll = () => {
