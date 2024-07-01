@@ -445,7 +445,7 @@ const FormulaEdit = forwardRef((props, ref) => {
         let list = [];
         let searchList = type === '@' ? fieldList || [] : methodList || [];
         if (searchCb) {
-            searchList = searchCb({ field: val, type, methodParamsInfo, fieldList, methodList, searchList, CnCodeToEn });
+            searchList = searchCb({ field: val, type, methodParamsInfo, fieldList, methodList, searchList, CnCodeToEn, EnCodeToCn });
         }
         if (searchList && searchList.length) {
             searchList.forEach((item) => {
