@@ -56,6 +56,7 @@ const FormulaEdit = forwardRef((props, ref) => {
         cnCodeToEnExtraLogic,
         enCodeToCnExtraLogic,
         lang,
+        searchCb,
         ...rest
     } = props;
 
@@ -116,6 +117,7 @@ const FormulaEdit = forwardRef((props, ref) => {
         funRegExpRef.current = new RegExp(`(${mArr.join('|')})`);
         funRegExpGRef.current = new RegExp(`(${mArr.join('|')})`, 'g');
         normalExpGRef.current = new RegExp(`(?<!['"])(${nArr.join('|')})`, 'g'); // normal 不能以引号开头
+        // normalExpGRef.current = new RegExp(`(?<!\\S)(${nArr.join('|')})(?!\\S)`,'g');
     };
 
     useEffect(() => {
@@ -382,6 +384,11 @@ const FormulaEdit = forwardRef((props, ref) => {
         const lastIndex = cursorBeforeOneChar.lastIndexOf('@', getCursor.ch);
         const lastIndex2 = cursorBeforeOneChar.lastIndexOf('#', getCursor.ch);
 
+        let methodParamsInfo = '';
+        if (lastIndex2 > -1) {
+            methodParamsInfo = cursorBeforeOneChar.substring(lastIndex2, getCursor.ch);
+        }
+
         if (fieldList && fieldList.length > 0 && lastIndex !== -1 && lastIndex > lastIndex2) {
             // 监测@
             const content = cursorBeforeOneChar.substring(lastIndex + 1, getCursor.ch);
@@ -395,7 +402,7 @@ const FormulaEdit = forwardRef((props, ref) => {
                     tipShowType: '@'
                 };
                 setCurState(temp);
-                search(content, '@');
+                search(content, '@',methodParamsInfo);
             } else {
                 setCurState({
                     ...curState,
@@ -416,7 +423,7 @@ const FormulaEdit = forwardRef((props, ref) => {
                     tipShow: true,
                     tipShowType: '#'
                 });
-                search(content, '#');
+                search(content, '#',methodParamsInfo);
             } else {
                 setCurState({
                     ...curState,
@@ -434,14 +441,19 @@ const FormulaEdit = forwardRef((props, ref) => {
         }
     };
 
-    const search = (val, type) => {
+    const search = (val, type, methodParamsInfo) => {
         let list = [];
-        const searchList = type === '@' ? fieldList || [] : methodList || [];
-        searchList.forEach((item) => {
-            if (item.name.includes(val)) {
-                list.push(item);
-            }
-        });
+        let searchList = type === '@' ? fieldList || [] : methodList || [];
+        if (searchCb) {
+            searchList = searchCb({ field: val, type, methodParamsInfo, fieldList, methodList, searchList, CnCodeToEn });
+        }
+        if (searchList && searchList.length) {
+            searchList.forEach((item) => {
+                if (item.name.includes(val)) {
+                    list.push(item);
+                }
+            });
+        }
         setDropList(list);
     };
 
