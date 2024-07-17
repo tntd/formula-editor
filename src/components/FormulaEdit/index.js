@@ -116,7 +116,9 @@ const FormulaEdit = forwardRef((props, ref) => {
         fieldRegExpRef.current = new RegExp(`(${fArr.sort(sortBy).join('|')})`);
         funRegExpRef.current = new RegExp(`(${mArr.join('|')})`);
         funRegExpGRef.current = new RegExp(`(${mArr.join('|')})`, 'g');
-        normalExpGRef.current = new RegExp(`(?<!['"])(${nArr.join('|')})`, 'g'); // normal 不能以引号开头
+        // 对特殊字符进行转移转译
+        const escapedArr = nArr.map((item) => item.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&'));
+        normalExpGRef.current = new RegExp(`(?<!['"])(${escapedArr.join('|')})`, 'g'); // normal 不能以引号开头
         // normalExpGRef.current = new RegExp(`(?<!\\S)(${nArr.join('|')})(?!\\S)`,'g');
     };
 
@@ -274,6 +276,7 @@ const FormulaEdit = forwardRef((props, ref) => {
         }
         if (!regExp && (normalList || []).length) {
             let temp = normalList.map((res) => res.name);
+            temp = temp.map((item) => item.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&'));
             temp = temp.join('');
             setRegExpState(`@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@${temp}]*`);
         }
@@ -310,10 +313,32 @@ const FormulaEdit = forwardRef((props, ref) => {
         return codemirrorList;
     };
 
+    const matchLetter = (match) => {
+        let turnStr = match.replace(/^\s*|\s*$/g, '');
+
+        const leadingSpacesMatch = match.match(/^\s*/);
+        let leadingSpaces = '';
+        if (leadingSpacesMatch && leadingSpacesMatch.length) {
+            leadingSpaces = leadingSpacesMatch[0];
+        }
+
+        const trailingSpacesMatch = match.match(/\s*$/);
+        let trailingSpaces = '';
+        if (trailingSpacesMatch && trailingSpacesMatch.length) {
+            trailingSpaces = trailingSpacesMatch[0];
+        }
+        return {
+            turnStr,
+            leadingSpaces,
+            trailingSpaces
+        };
+    };
+
     const CnCodeToEn = (cnCode) => {
         const reg = new RegExp(regExp || regExpState, 'g');
         let enCode = cnCode.replace(reg, (match) => {
-            let turnStr = match.replace(/^\s*|\s*$/g, '');
+            let {turnStr,leadingSpaces,trailingSpaces} = matchLetter(match);
+
             const fItem = (fieldList || []).find((item) => `@${item.name}` === turnStr);
             if (fItem) {
                 turnStr = `@${fItem.value}`;
@@ -325,7 +350,7 @@ const FormulaEdit = forwardRef((props, ref) => {
                     }
                 }
             }
-            return turnStr;
+            return leadingSpaces + turnStr + trailingSpaces;
         });
         enCode = enCode.replace(funRegExpGRef.current, (match) => {
             let turnStr = match;
@@ -348,12 +373,12 @@ const FormulaEdit = forwardRef((props, ref) => {
         const mValueArr = (methodList || []).map((item) => `#${item.realValue}`);
         const nValueArr = (normalList || []).map((item) => item.value);
         const keywords = [...mValueArr, ...nValueArr].join('|');
-        const regExp = new RegExp(`(${keywords})`, 'g');
+        const curRegExp = new RegExp(`(${keywords})`, 'g');
         let cnCode = enCode.replace(reg, (match) => {
-            let turnStr = match;
-            const fItem = (fieldList || []).find((item) => `@${item.value}` === match);
+            let { turnStr, leadingSpaces, trailingSpaces } = matchLetter(match);
+            const fItem = (fieldList || []).find((item) => `@${item.value}` === turnStr);
             if (fItem) turnStr = `@${fItem.name}`;
-            return turnStr;
+            return leadingSpaces+ turnStr +trailingSpaces;
         });
 
         if (enCodeToCnExtraLogic) {
@@ -363,7 +388,7 @@ const FormulaEdit = forwardRef((props, ref) => {
             }
         }
 
-        cnCode = cnCode.replace(regExp, (match) => {
+        cnCode = cnCode.replace(curRegExp, (match) => {
             let turnStr = match;
             const mItem = (methodList || []).find((item) => `#${item.realValue}` === match);
             if (mItem) turnStr = `#${mItem.name}`;
