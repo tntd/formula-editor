@@ -52,8 +52,8 @@ const methodList2 = [
 ];
 
 const normalList = [
-  { name: "且", value: "and" },
-  { name: "或", value: "or" }
+  { name: "&&", value: "&&" },
+  { name: "||", value: "||" }
 ];
 
 const fieldList = [
@@ -78,14 +78,14 @@ const enCodeToCnExtraLogic = (enCode) => {
 export default props => {
   const defaultCode = "hhahahah@111";
   const [code, setCode] = useState(`int a = 100;
-  string s = #sum("hello",@hahahdsdhjbewdbu0);
-  double d=777.324;
-  boolean x = a >= 0;
-  list result = [x, d, 333];
-  "或为空";
-  且
-  或
-  `);
+    string s = #sum("hello",@hahahdsdhjbewdbu0);
+    double d=777.324;
+    boolean x = a >= 0;
+    list result = [x, d, 333];
+    "或为空";
+    且
+    或
+   @hahahdsdhjbewdbu0 && @hahahdsdhjbewdbu0 || @hahahdsdhjbewdbu2`);
   const [height, setHeight] = useState(300);
 
   const [list, setList] = useState(testData);
@@ -111,7 +111,6 @@ export default props => {
         fieldList={list} // @唤起
         // regRxp="@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*" //中文转英文默认正则
         methodList={list1} // @唤起
-        pr
         onChange={(enCode, data) => {
           console.log(data)
           console.log('onChange---------1')
