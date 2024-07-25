@@ -337,7 +337,7 @@ const FormulaEdit = forwardRef((props, ref) => {
     const CnCodeToEn = (cnCode) => {
         const reg = new RegExp(regExp || regExpState, 'g');
         let enCode = cnCode.replace(reg, (match) => {
-            let {turnStr,leadingSpaces,trailingSpaces} = matchLetter(match);
+            let { turnStr, leadingSpaces, trailingSpaces } = matchLetter(match);
 
             const fItem = (fieldList || []).find((item) => `@${item.name}` === turnStr);
             if (fItem) {
@@ -378,7 +378,7 @@ const FormulaEdit = forwardRef((props, ref) => {
             let { turnStr, leadingSpaces, trailingSpaces } = matchLetter(match);
             const fItem = (fieldList || []).find((item) => `@${item.value}` === turnStr);
             if (fItem) turnStr = `@${fItem.name}`;
-            return leadingSpaces+ turnStr +trailingSpaces;
+            return leadingSpaces + turnStr + trailingSpaces;
         });
 
         if (enCodeToCnExtraLogic) {
@@ -427,7 +427,7 @@ const FormulaEdit = forwardRef((props, ref) => {
                     tipShowType: '@'
                 };
                 setCurState(temp);
-                search(content, '@',methodParamsInfo);
+                search(content, '@', methodParamsInfo);
             } else {
                 setCurState({
                     ...curState,
@@ -448,7 +448,7 @@ const FormulaEdit = forwardRef((props, ref) => {
                     tipShow: true,
                     tipShowType: '#'
                 });
-                search(content, '#',methodParamsInfo);
+                search(content, '#', methodParamsInfo);
             } else {
                 setCurState({
                     ...curState,
@@ -567,7 +567,10 @@ const FormulaEdit = forwardRef((props, ref) => {
             }
             rootDom.querySelector(`.${active}`).scrollIntoViewIfNeeded();
         } else if (type === 'enter') {
-            const node = document.querySelector(`.${active}`);
+            let node = document.querySelector(`.${active}`);
+            if (!(node.attributes && node.attributes.data && node.attributes.data.value)) {
+                node = nodeList[index];
+            }
             handleClick(
                 {
                     name: node.title,
