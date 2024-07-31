@@ -118,7 +118,7 @@ const FormulaEdit = forwardRef((props, ref) => {
         funRegExpGRef.current = new RegExp(`(${mArr.join('|')})`, 'g');
         // 对特殊字符进行转移转译
         const escapedArr = nArr.map((item) => item.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&'));
-        normalExpGRef.current = new RegExp(`(?<!['"])(${escapedArr.join('|')})`, 'g'); // normal 不能以引号开头
+        normalExpGRef.current = new RegExp(`(${escapedArr.join('|')})`, 'g'); // normal 不能以引号开头
         // normalExpGRef.current = new RegExp(`(?<!\\S)(${nArr.join('|')})(?!\\S)`,'g');
     };
 
