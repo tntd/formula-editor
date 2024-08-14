@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, forwardRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, forwardRef, useCallback, useMemo } from 'react';
 import * as CodeMirror from 'codemirror/lib/codemirror';
 import 'codemirror/mode/groovy/groovy';
 import 'codemirror/mode/sql/sql';
@@ -67,7 +67,18 @@ const FormulaEdit = forwardRef((props, ref) => {
         tipShowType: null
     });
     const [dropList, setDropList] = useState([]);
-    const [regExpState, setRegExpState] = useState('@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*');
+
+    // const [regExpState, setRegExpState] = useState('@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*');
+    const regExpState = useMemo(() => {
+        if (!regExp && (normalList || []).length) {
+            let temp = normalList.map((res) => res.name);
+            temp = temp.map((item) => item.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&'));
+            temp = temp.join('');
+            return `@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@${temp}]*`;
+        }
+        return '@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*';
+    }, [regExp, normalList]);
+
     const codeMirrorEditor = useRef();
     const textareaRef = useRef();
     const fieldRegExpRef = useRef('');
@@ -274,12 +285,13 @@ const FormulaEdit = forwardRef((props, ref) => {
                 });
             });
         }
-        if (!regExp && (normalList || []).length) {
-            let temp = normalList.map((res) => res.name);
-            temp = temp.map((item) => item.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&'));
-            temp = temp.join('');
-            setRegExpState(`@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@${temp}]*`);
-        }
+        // 这里有异步问题
+        // if (!regExp && (normalList || []).length) {
+        //     let temp = normalList.map((res) => res.name);
+        //     temp = temp.map((item) => item.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&'));
+        //     temp = temp.join('');
+        //     setRegExpState(`@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@${temp}]*`);
+        // }
         if ((fieldList || []).length || (methodList || []).length || (normalList || []).length) {
             const codeValue = EnCodeToCn(value);
             doChange(codeValue);
