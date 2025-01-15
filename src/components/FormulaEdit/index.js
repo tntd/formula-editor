@@ -442,11 +442,12 @@ const FormulaEdit = forwardRef((props, ref) => {
 
 
         const scrollDiv = tntCodeMirrorRef.current.querySelector('#scrollDiv');
+        let scrollDivHeight = 200
         if(scrollDiv){
-            const { height:scrollDivHeight } = scrollDiv.getBoundingClientRect();
-            if(document.body.clientHeight - top < scrollDivHeight){
-                top = top - scrollDivHeight - 20
-            }
+            scrollDivHeight = scrollDiv.getBoundingClientRect().height;
+        }
+        if(document.body.clientHeight - top < scrollDivHeight){
+            top = top - scrollDivHeight - 20
         }
         top = top + 20
 
