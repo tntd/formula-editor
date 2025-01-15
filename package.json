@@ -1,6 +1,6 @@
 {
   "name": "@tntd/formula-edit",
-  "version": "2.1.15",
+  "version": "2.1.16",
   "description": "react计算公式编辑器",
   "keywords": [
     "formula",

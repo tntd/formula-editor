@@ -90,6 +90,9 @@ const FormulaEdit = forwardRef((props, ref) => {
     const modeField = useRef();
     const eventRef = useRef();
 
+    const tntCodeMirrorRef = useRef()
+
+
     const _mode = mode === 'defineScript' ? modeType.current : mode;
     useEffect(() => {
         if (mode === 'defineScript') {
@@ -426,6 +429,28 @@ const FormulaEdit = forwardRef((props, ref) => {
             methodParamsInfo = cursorBeforeOneChar.substring(lastIndex2, getCursor.ch);
         }
 
+        let { left, top  } = pos || {};
+
+        if(selectStyle){
+            const defaultWidth = selectStyle.width ? Number(selectStyle.width.replace("px",'')) : 0;
+            const { x, width } = tntCodeMirrorRef.current ? tntCodeMirrorRef.current.getBoundingClientRect() : {};
+
+            if(left + defaultWidth >= x + width){
+                left = left - defaultWidth + ( width - left ) + x
+            }
+        }
+
+
+        const scrollDiv = tntCodeMirrorRef.current.querySelector('#scrollDiv');
+        if(scrollDiv){
+            const { height:scrollDivHeight } = scrollDiv.getBoundingClientRect();
+            if(document.body.clientHeight - top < scrollDivHeight){
+                top = top - scrollDivHeight - 20
+            }
+        }
+        top = top + 20
+
+
         if (fieldList && fieldList.length > 0 && lastIndex !== -1 && lastIndex > lastIndex2) {
             // 监测@
             const content = cursorBeforeOneChar.substring(lastIndex + 1, getCursor.ch);
@@ -433,8 +458,8 @@ const FormulaEdit = forwardRef((props, ref) => {
             if (findObj) {
                 const temp = {
                     ...curState,
-                    posLeft: pos.left,
-                    posTop: pos.top + 20,
+                    posLeft: left,
+                    posTop: top,
                     tipShow: true,
                     tipShowType: '@'
                 };
@@ -455,8 +480,8 @@ const FormulaEdit = forwardRef((props, ref) => {
             if (findObj) {
                 setCurState({
                     ...curState,
-                    posLeft: pos.left,
-                    posTop: pos.top + 20,
+                    posLeft: left,
+                    posTop: top,
                     tipShow: true,
                     tipShowType: '#'
                 });
@@ -601,7 +626,7 @@ const FormulaEdit = forwardRef((props, ref) => {
     };
 
     return (
-        <div className="tnt-codemirror">
+        <div className="tnt-codemirror" ref={tntCodeMirrorRef}>
             {children}
             <textarea ref={textareaRef} />
             {placeholder && !value && <a className="placeholder">{placeholder}</a>}
