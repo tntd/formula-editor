@@ -107,6 +107,7 @@ export default props => {
       <FormulaEdit
         ref={formulaRef}
         placeholder="return a+b"
+        // mode={'groovy'}
         value={code} //传入组件自动转化成cnCode*/
         fieldList={list} // @唤起
         // regRxp="@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*" //中文转英文默认正则

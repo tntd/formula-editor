@@ -17,6 +17,7 @@ import './index.less';
 const beautify_js = require('js-beautify').js_beautify;
 
 import ScrollContainer from './ScrollContainer';
+import ErrorPanel from './ErrorPanel';
 //输入字段&函数排序先匹配最长的
 const sortBy = (a, b) => {
     if (a.length > b.length) {
@@ -57,6 +58,7 @@ const FormulaEdit = forwardRef((props, ref) => {
         enCodeToCnExtraLogic,
         lang,
         searchCb,
+        showErrorPanel = true, // 新增props：是否显示错误面板
         ...rest
     } = props;
 
@@ -67,6 +69,7 @@ const FormulaEdit = forwardRef((props, ref) => {
         tipShowType: null
     });
     const [dropList, setDropList] = useState([]);
+    const [currentErrors, setCurrentErrors] = useState([]); // 新增状态：当前错误列表
 
     // const [regExpState, setRegExpState] = useState('@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*');
     const regExpState = useMemo(() => {
@@ -89,6 +92,10 @@ const FormulaEdit = forwardRef((props, ref) => {
     const modeType = useRef(getId('defineScript'));
     const modeField = useRef();
     const eventRef = useRef();
+    const isInitializedRef = useRef(false);
+    const isSettingValueRef = useRef(false);
+    const errorCacheRef = useRef(null);
+    const lastCheckedCodeRef = useRef('');
 
     const tntCodeMirrorRef = useRef()
 
@@ -115,25 +122,92 @@ const FormulaEdit = forwardRef((props, ref) => {
         }
     };
 
-    const setLocalStorage = () => {
-        // 字段存本地，供分词高亮使用
-        modeField.current = {
-            codemirrorFieldList: getLocalList(fieldList || [], '@'),
-            codemirrorMethodList: getLocalList(methodList || [], '#'),
-            codemirrorNormalList: getLocalList(normalList || [], ''),
-            codemirrorKeywordList: keyWords
-        };
+    // 使用useMemo优化数组处理和正则表达式创建
+    const memoizedArrays = useMemo(() => {
         const fArr = (fieldList || []).map((item) => `@${item.name.replace(/\[/g, '\\[').replace(/\]/g, '\\]')}`);
         const mArr = (methodList || []).map((item) => `#${item.name}`).sort(sortBy);
         const nArr = (normalList || []).map((item) => item.name).sort(sortBy);
-        // const keywords = [...mArr, ...nArr];
-        fieldRegExpRef.current = new RegExp(`(${fArr.sort(sortBy).join('|')})`);
-        funRegExpRef.current = new RegExp(`(${mArr.join('|')})`);
-        funRegExpGRef.current = new RegExp(`(${mArr.join('|')})`, 'g');
-        // 对特殊字符进行转移转译
         const escapedArr = nArr.map((item) => item.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&'));
-        normalExpGRef.current = new RegExp(`(${escapedArr.join('|')})`, 'g'); // normal 不能以引号开头
-        // normalExpGRef.current = new RegExp(`(?<!\\S)(${nArr.join('|')})(?!\\S)`,'g');
+        
+        return {
+            fArr: fArr.sort(sortBy),
+            mArr,
+            nArr,
+            escapedArr
+        };
+    }, [fieldList, methodList, normalList]);
+
+    // 使用useMemo优化正则表达式创建
+    const memoizedRegExps = useMemo(() => {
+        const { fArr, mArr, escapedArr } = memoizedArrays;
+        
+        return {
+            fieldRegExp: fArr.length ? new RegExp(`(${fArr.join('|')})`) : null,
+            funRegExp: mArr.length ? new RegExp(`(${mArr.join('|')})`) : null,
+            funRegExpG: mArr.length ? new RegExp(`(${mArr.join('|')})`, 'g') : null,
+            normalExpG: escapedArr.length ? new RegExp(`(${escapedArr.join('|')})`, 'g') : null
+        };
+    }, [memoizedArrays]);
+
+    // 使用useMemo优化modeField数据
+    const memoizedModeField = useMemo(() => {
+        // 内联getLocalList逻辑避免依赖问题
+        const createLocalList = (list, type) => {
+            const copyList = Object.assign([], list);
+            // 排序，把长的放前面
+            copyList.sort((a, b) => {
+                if (a.name.length > b.name.length) {
+                    return -1;
+                }
+                if (a.name.length < b.name.length) {
+                    return 1;
+                }
+                return 0;
+            });
+            let codemirrorList = [];
+            for (let i = 0; i < copyList.length; i++) {
+                codemirrorList.push(`${type}${copyList[i].name}`);
+            }
+            return codemirrorList;
+        };
+
+        return {
+            codemirrorFieldList: createLocalList(fieldList || [], '@'),
+            codemirrorMethodList: createLocalList(methodList || [], '#'),
+            codemirrorNormalList: createLocalList(normalList || [], ''),
+            codemirrorKeywordList: keyWords
+        };
+    }, [fieldList, methodList, normalList, keyWords]);
+
+    // 防抖工具函数
+    const debounce = (func, delay) => {
+        let timeoutId;
+        return function (...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(this, args), delay);
+        };
+    };
+
+    // 使用useMemo优化keywords拼接
+    const memoizedKeywords = useMemo(() => {
+        const mValueArr = (methodList || []).map((item) => `#${item.realValue}`);
+        const nValueArr = (normalList || []).map((item) => item.value);
+        const keywords = [...mValueArr, ...nValueArr].join('|');
+        return {
+            keywords,
+            curRegExp: keywords ? new RegExp(`(${keywords})`, 'g') : null
+        };
+    }, [methodList, normalList]);
+
+    const setLocalStorage = () => {
+        // 字段存本地，供分词高亮使用
+        modeField.current = memoizedModeField;
+        
+        // 使用缓存的正则表达式
+        fieldRegExpRef.current = memoizedRegExps.fieldRegExp;
+        funRegExpRef.current = memoizedRegExps.funRegExp;
+        funRegExpGRef.current = memoizedRegExps.funRegExpG;
+        normalExpGRef.current = memoizedRegExps.normalExpG;
     };
 
     useEffect(() => {
@@ -175,7 +249,7 @@ const FormulaEdit = forwardRef((props, ref) => {
                             indent_size: indentUnit,
                             indent_char: indentUnit === '1' ? '\t' : ' '
                         });
-                        codeMirrorEditor.current.setValue(formatValue);
+                        setValueSafely(formatValue);
                     }
                 }
             };
@@ -191,6 +265,9 @@ const FormulaEdit = forwardRef((props, ref) => {
                 ...ops,
                 ...rest
             });
+            
+            // 初始化完成后设置标志
+            isInitializedRef.current = true;
         }
 
         let codeValue = '';
@@ -198,7 +275,7 @@ const FormulaEdit = forwardRef((props, ref) => {
         if (_mode === 'groovy') {
             codeMirrorEditor.current.off('changes', editorChanges);
         }
-        codeMirrorEditor.current.setValue(codeValue);
+        setValueSafely(codeValue);
         codeMirrorEditor.current.setSize('auto', height);
         if (_mode === 'groovy') {
             codeMirrorEditor.current.on('changes', editorChanges);
@@ -207,7 +284,7 @@ const FormulaEdit = forwardRef((props, ref) => {
         editorEvent && editorEvent({ codeEditor: codeMirrorEditor.current, fullScreen, exitFullScreen, EnCodeToCn, CnCodeToEn });
 
         return () => {};
-    }, []);
+    }, [_mode, theme, lineNumber, readOnly, height, indentUnit]);
 
     useEffect(() => {
         if (codeMirrorEditor.current) {
@@ -244,15 +321,91 @@ const FormulaEdit = forwardRef((props, ref) => {
         }
     }, [height]);
 
+    // 错误检测和收集功能
+    const collectErrors = useCallback((cnCode) => {
+        if (!codeMirrorEditor.current) return [];
+        
+        const errors = [];
+        const doc = codeMirrorEditor.current.getDoc();
+        
+        // 检查各种错误类型
+        const errorSelectors = [
+            { selector: '.cm-nomal-keyword', type: 'syntax', message: '未识别的关键字' },
+            { selector: '.cm-bracket-error', type: 'bracket', message: '括号不匹配' },
+            { selector: '.cm-function-error', type: 'function', message: '函数缺少参数括号' },
+            { selector: '.cm-string-error', type: 'string', message: '字符串未闭合' }
+        ];
+        
+        errorSelectors.forEach(({ selector, type, message }) => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(element => {
+                // 获取错误位置信息
+                const lineElement = element.closest('.CodeMirror-line');
+                if (lineElement) {
+                    const lineNumber = Array.from(lineElement.parentNode.children).indexOf(lineElement);
+                    errors.push({
+                        type,
+                        message,
+                        line: lineNumber + 1,
+                        severity: type === 'syntax' ? 'error' : 'warning',
+                        text: element.textContent
+                    });
+                }
+            });
+        });
+        
+        return errors;
+    }, []);
+
     const doChange = (cnCode) => {
-        const errorKeyword = document.body.querySelector('.cm-nomal-keyword');
+        // 避免初始化时或程序设置值时触发change
+        if (!isInitializedRef.current || isSettingValueRef.current) {
+            return;
+        }
+        
+        // 收集所有错误信息
+        const detectedErrors = collectErrors(cnCode);
+        setCurrentErrors(detectedErrors); // 更新错误状态
+        
+        // 优化错误检测：缓存结果，避免重复DOM查询
+        let errorMsg = null;
+        let hasErrors = detectedErrors.length > 0;
+        
+        if (lastCheckedCodeRef.current !== cnCode) {
+            if (hasErrors) {
+                // 生成详细的错误信息
+                const errorSummary = detectedErrors.map(err => 
+                    `第${err.line}行: ${err.message}${err.text ? ` (${err.text})` : ''}`
+                ).join('; ');
+                errorMsg = errorSummary;
+            }
+            errorCacheRef.current = errorMsg;
+            lastCheckedCodeRef.current = cnCode;
+        } else {
+            errorMsg = errorCacheRef.current;
+        }
+        
         let enCode = CnCodeToEn(cnCode);
         const data = {
             cnCode,
             enCode,
-            errorMsg: errorKeyword ? '存在错误代码' : null
+            errorMsg,
+            errors: detectedErrors, // 新增详细错误列表
+            hasErrors
         };
         props.onChange(enCode, data);
+    };
+
+    // 安全的setValue函数，避免触发不必要的change事件
+    const setValueSafely = (value) => {
+        if (!codeMirrorEditor.current) return;
+        
+        isSettingValueRef.current = true;
+        codeMirrorEditor.current.setValue(value);
+        // 使用setTimeout确保所有change事件处理完毕后再重置标志
+        setTimeout(() => {
+            isSettingValueRef.current = false;
+        }, 0);
     };
 
     eventRef.current = (cm) => {
@@ -274,14 +427,15 @@ const FormulaEdit = forwardRef((props, ref) => {
             let codeValue = value;
             if (codeValue) codeValue = EnCodeToCn(codeValue);
             codeMirrorEditor.current.off('changes', editorChanges);
-            codeMirrorEditor.current.setValue(codeValue);
+            setValueSafely(codeValue);
             codeMirrorEditor.current.on('changes', editorChanges);
 
             codeMirrorEditor.current.on('cursorActivity', (cm) => {
-                cursorActivity(cm);
+                debouncedCursorActivity(cm);
             });
 
             codeMirrorEditor.current.on('focus', (cm) => {
+                // focus事件不需要防抖，立即执行
                 cursorActivity(cm);
                 setCurState({
                     ...curState
@@ -385,10 +539,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 
     const EnCodeToCn = (enCode) => {
         const reg = new RegExp(regExp || regExpState, 'g');
-        const mValueArr = (methodList || []).map((item) => `#${item.realValue}`);
-        const nValueArr = (normalList || []).map((item) => item.value);
-        const keywords = [...mValueArr, ...nValueArr].join('|');
-        const curRegExp = new RegExp(`(${keywords})`, 'g');
+        const { curRegExp } = memoizedKeywords;
         let cnCode = enCode.replace(reg, (match) => {
             let { turnStr, leadingSpaces, trailingSpaces } = matchLetter(match);
             const fItem = (fieldList || []).find((item) => `@${item.value}` === turnStr);
@@ -403,16 +554,27 @@ const FormulaEdit = forwardRef((props, ref) => {
             }
         }
 
-        cnCode = cnCode.replace(curRegExp, (match) => {
-            let turnStr = match;
-            const mItem = (methodList || []).find((item) => `#${item.realValue}` === match);
-            if (mItem) turnStr = `#${mItem.name}`;
-            const nItem = (normalList || []).find((item) => item.value === match);
-            if (nItem) turnStr = nItem.name;
-            return turnStr;
-        });
+        if (curRegExp) {
+            cnCode = cnCode.replace(curRegExp, (match) => {
+                let turnStr = match;
+                const mItem = (methodList || []).find((item) => `#${item.realValue}` === match);
+                if (mItem) turnStr = `#${mItem.name}`;
+                const nItem = (normalList || []).find((item) => item.value === match);
+                if (nItem) turnStr = nItem.name;
+                return turnStr;
+            });
+        }
         return cnCode;
     };
+
+    // 创建防抖版本的关键函数
+    const debouncedCursorActivity = useMemo(() => debounce((cm) => {
+        cursorActivity(cm);
+    }, 100), []);
+
+    const debouncedSearch = useMemo(() => debounce((val, type, methodParamsInfo) => {
+        search(val, type, methodParamsInfo);
+    }, 150), []);
 
     const cursorActivity = (cm) => {
         if (readOnly) return;
@@ -465,7 +627,7 @@ const FormulaEdit = forwardRef((props, ref) => {
                     tipShowType: '@'
                 };
                 setCurState(temp);
-                search(content, '@', methodParamsInfo);
+                debouncedSearch(content, '@', methodParamsInfo);
             } else {
                 setCurState({
                     ...curState,
@@ -486,7 +648,7 @@ const FormulaEdit = forwardRef((props, ref) => {
                     tipShow: true,
                     tipShowType: '#'
                 });
-                search(content, '#', methodParamsInfo);
+                debouncedSearch(content, '#', methodParamsInfo);
             } else {
                 setCurState({
                     ...curState,
@@ -504,7 +666,7 @@ const FormulaEdit = forwardRef((props, ref) => {
         }
     };
 
-    const search = (val, type, methodParamsInfo) => {
+    const search = useCallback((val, type, methodParamsInfo) => {
         let list = [];
         let searchList = type === '@' ? fieldList || [] : methodList || [];
         if (searchCb) {
@@ -518,9 +680,9 @@ const FormulaEdit = forwardRef((props, ref) => {
             });
         }
         setDropList(list);
-    };
+    }, [fieldList, methodList, searchCb, CnCodeToEn, EnCodeToCn]);
 
-    const handleClick = (item, type) => {
+    const handleClick = useCallback((item, type) => {
         const getCursor = codeMirrorEditor.current.getCursor(); // 焦点
         const getLineInfo = codeMirrorEditor.current.getLine(getCursor.line); // 当前行数据
         const cursorBeforeOneChar = getLineInfo.substring(0, getCursor.ch); // 起始到当前焦点数据
@@ -562,7 +724,7 @@ const FormulaEdit = forwardRef((props, ref) => {
             tipShow: false,
             tipShowType: null
         });
-    };
+    }, [isEndMark, curState]);
 
     const enterFuc = (type, cm) => {
         if (!tipShow) {
@@ -654,6 +816,15 @@ const FormulaEdit = forwardRef((props, ref) => {
                 />
             ) : (
                 ''
+            )}
+
+            {/* 错误提示面板 */}
+            {showErrorPanel && currentErrors.length > 0 && (
+                <ErrorPanel 
+                    errors={currentErrors}
+                    theme={theme}
+                    visible={true}
+                />
             )}
         </div>
     );

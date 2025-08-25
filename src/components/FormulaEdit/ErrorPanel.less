@@ -1,0 +1,105 @@
+.error-panel {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-top: 8px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+
+    &.error-panel-day {
+        background-color: #fafafa;
+        color: #333;
+        
+        .error-panel-header {
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #e0e0e0;
+        }
+    }
+
+    &.error-panel-night {
+        background-color: #2e2e2e;
+        color: #e0e0e0;
+        border-color: #404040;
+        
+        .error-panel-header {
+            background-color: #3a3a3a;
+            border-bottom: 1px solid #404040;
+        }
+    }
+
+    .error-panel-header {
+        padding: 8px 12px;
+        font-weight: bold;
+        
+        .error-panel-title {
+            font-size: 13px;
+        }
+    }
+
+    .error-panel-content {
+        padding: 4px 0;
+    }
+
+    .error-item {
+        display: flex;
+        align-items: center;
+        padding: 6px 12px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        &.error-item-error {
+            border-left: 3px solid #f44336;
+        }
+
+        &.error-item-warning {
+            border-left: 3px solid #ff9800;
+        }
+
+        .error-icon {
+            margin-right: 8px;
+            font-size: 14px;
+        }
+
+        .error-line {
+            margin-right: 12px;
+            color: #666;
+            font-weight: bold;
+            min-width: 50px;
+        }
+
+        .error-message {
+            flex: 1;
+            margin-right: 8px;
+        }
+
+        .error-text {
+            color: #999;
+            font-style: italic;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+}
+
+.error-panel-night {
+    .error-item {
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .error-line {
+            color: #aaa;
+        }
+
+        .error-text {
+            color: #777;
+        }
+    }
+}
