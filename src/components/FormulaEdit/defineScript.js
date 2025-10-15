@@ -13,9 +13,33 @@ function defineScript(mode, modeField) {
 			"(", ")", ";", ",", ":", "{", "}"];
 
 		return {
-			token: function (stream) {
+			startState: function() {
+                return { inMultilineComment: false };
+            },
+			token: function (stream, state) {
 				// 空白空间
 				if (stream.eatSpace()) return null;
+
+				if (state.inMultilineComment) {
+					// 跳过内容直到找到'*'字符
+					const beforeLength = stream.pos;
+					stream.skipTo("*");
+					
+					// 如果找到'*'，消耗它
+					if (stream.pos !== beforeLength) {
+					stream.next(); // 消耗 '*'
+					
+					// 检查下一个字符是否是'/'，如果是则结束注释
+					if (stream.peek() === "/") {
+						stream.next(); // 消耗 '/'
+						state.inMultilineComment = false;
+					}
+					} else {
+					// 到达行尾，继续保持在多行注释状态
+					stream.skipToEnd();
+					}
+					return "comment";
+				}
 
 				// 处理单行注释
 				if (stream.match("//")) {
@@ -23,6 +47,26 @@ function defineScript(mode, modeField) {
 					return "comment";
 				}
 
+				// 处理多行注释 /* */
+                if (stream.match("/**")) {
+					state.inMultilineComment = true;
+					
+					// 立即检查是否有单行的多行注释（如 /* 注释 */）
+					const beforeLength = stream.pos;
+					stream.skipTo("*");
+					
+					if (stream.pos !== beforeLength) {
+					stream.next(); // 消耗 '*'
+					if (stream.peek() === "/") {
+						stream.next(); // 消耗 '/'
+						state.inMultilineComment = false;
+					}
+					} else {
+					stream.skipToEnd();
+					}
+					return "comment";
+				}
+				
 				// 处理符号
 				for (let i = 0; i < markList.length; i++) {
 					if (stream.match(markList[i])) {
