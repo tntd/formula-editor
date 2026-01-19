@@ -1,0 +1,46 @@
+{
+  "otpDir": "./.octopus",
+  "proType": "react",
+  "srcLang": "zh-CN",
+  "distLangs": [
+    "en-US",
+    "th-TH",
+    "ar-EG",
+    "zh-TW",
+    "es-ES",
+    "ko-KR"
+  ],
+  "googleApiKey": "",
+  "baiduApiKey": {
+    "appId": "",
+    "appKey": ""
+  },
+  "baiduLangMap": {
+    "en-US": "en"
+  },
+  "translateOptions": {
+    "concurrentLimit": 10,
+    "requestOptions": {}
+  },
+  "fileSuffix": [
+    ".ts",
+    ".js",
+    ".vue",
+    ".jsx",
+    ".tsx"
+  ],
+  "defaultTranslateKeyApi": "Pinyin",
+  "importI18N": "import mapLocale, { getLang } from './I18N';",
+  "include": [
+    "./src/components/FormulaEdit"
+  ],
+  "exclude": [
+    "./test"
+  ],
+  "regPath": "locale",
+  "resourcePath": [],
+  "reservedKey": [
+    "template",
+    "case"
+  ]
+}

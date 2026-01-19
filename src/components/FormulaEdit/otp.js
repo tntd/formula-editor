@@ -1,37 +1,23 @@
+import mapLocale, { getLang } from '../../I18N';
 import Cookies from 'universal-cookie';
 
 const cookies = new Cookies();
 
-export const TypeMap = {
-    cn: {
-        INT: '整数',
-        DOUBLE: '小数',
-        STRING: '字符串',
-        ENUM: '枚举',
-        BOOLEAN: '布尔',
-        DATETIME: '时间',
-        ARRAY: '数组',
-    },
-
-    en: {
-        INT: 'Integer',
-        DOUBLE: 'Double',
-        STRING: 'String',
-        ENUM: 'Enum',
-        BOOLEAN: 'Boolean',
-        DATETIME: 'Datetime',
-        ARRAY: 'Array',
-    }
-};
-
-export const getLang = () => {
-    return cookies.get('lang') || 'cn';
-};
+export const TypeMap = (I18N) => ({
+    INT: I18N.formulaedit.otp.zhengShu,
+    DOUBLE: I18N.formulaedit.otp.xiaoShu,
+    STRING: I18N.formulaedit.otp.ziFuChuan,
+    ENUM: I18N.formulaedit.otp.meiJu,
+    BOOLEAN: I18N.formulaedit.otp.buEr,
+    DATETIME: I18N.formulaedit.otp.shiJian,
+    ARRAY: I18N.formulaedit.otp.shuZu,
+})
 
 
-export const getTypeMap = (typeMap,language) => {
-    let lang = language || getLang();
-    let otp = TypeMap[lang];
+
+export const getTypeMap = (I18N) => {
+
+    let otp = TypeMap(I18N);
 
     const TYPE_MAP = {
         'INT': {

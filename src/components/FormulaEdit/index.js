@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef, forwardRef, useCallback, useMemo } from 'react';
 import * as CodeMirror from 'codemirror/lib/codemirror';
 import 'codemirror/mode/groovy/groovy';
@@ -17,6 +18,7 @@ import './index.less';
 const beautify_js = require('js-beautify').js_beautify;
 
 import ScrollContainer from './ScrollContainer';
+import { WrapLocaleReceiver } from '../../I18N';
 //输入字段&函数排序先匹配最长的
 const sortBy = (a, b) => {
     if (a.length > b.length) {
@@ -31,8 +33,10 @@ const sortBy = (a, b) => {
 let index = 0;
 const getId = (type = 'formula-edit') => `${type}-${index++}`;
 
-const FormulaEdit = forwardRef((props, ref) => {
+const FormulaEdit = (props) => {
     const {
+        I18N,
+        localeCode,
         children,
         value = '',
         readOnly = false,
@@ -206,7 +210,7 @@ const FormulaEdit = forwardRef((props, ref) => {
 
         editorEvent && editorEvent({ codeEditor: codeMirrorEditor.current, fullScreen, exitFullScreen, EnCodeToCn, CnCodeToEn });
 
-        return () => {};
+        return () => { };
     }, []);
 
     useEffect(() => {
@@ -250,7 +254,7 @@ const FormulaEdit = forwardRef((props, ref) => {
         const data = {
             cnCode,
             enCode,
-            errorMsg: errorKeyword ? '存在错误代码' : null
+            errorMsg: errorKeyword ? I18N.formulaedit.index.cunZaiCuoWuDai : null
         };
         props.onChange(enCode, data);
     };
@@ -429,24 +433,24 @@ const FormulaEdit = forwardRef((props, ref) => {
             methodParamsInfo = cursorBeforeOneChar.substring(lastIndex2, getCursor.ch);
         }
 
-        let { left, top  } = pos || {};
+        let { left, top } = pos || {};
 
-        if(selectStyle){
-            const defaultWidth = selectStyle.width ? Number(selectStyle.width.replace("px",'')) : 0;
+        if (selectStyle) {
+            const defaultWidth = selectStyle.width ? Number(selectStyle.width.replace("px", '')) : 0;
             const { x, width } = tntCodeMirrorRef.current ? tntCodeMirrorRef.current.getBoundingClientRect() : {};
 
-            if(left + defaultWidth >= x + width){
-                left = left - defaultWidth + ( width - left ) + x
+            if (left + defaultWidth >= x + width) {
+                left = left - defaultWidth + (width - left) + x
             }
         }
 
 
         const scrollDiv = tntCodeMirrorRef.current.querySelector('#scrollDiv');
         let scrollDivHeight = 200
-        if(scrollDiv){
+        if (scrollDiv) {
             scrollDivHeight = scrollDiv.getBoundingClientRect().height;
         }
-        if(document.body.clientHeight - top < scrollDivHeight){
+        if (document.body.clientHeight - top < scrollDivHeight) {
             top = top - scrollDivHeight - 20
         }
         top = top + 20
@@ -635,6 +639,7 @@ const FormulaEdit = forwardRef((props, ref) => {
             {/* @弹框 */}
             {tipShow ? (
                 <ScrollContainer
+                    I18N={I18N}
                     theme={theme} //主题样式
                     dropList={dropList} //加载的数据
                     listLen={dropList.length} //加载的数据长度
@@ -657,6 +662,6 @@ const FormulaEdit = forwardRef((props, ref) => {
             )}
         </div>
     );
-});
+}
 
-export default FormulaEdit;
+export default WrapLocaleReceiver(FormulaEdit);

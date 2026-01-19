@@ -1,6 +1,6 @@
 {
   "name": "@tntd/formula-edit",
-  "version": "2.1.18",
+  "version": "2.1.19",
   "description": "react计算公式编辑器",
   "keywords": [
     "formula",
@@ -22,6 +22,7 @@
   "author": "bo.liu@tongdun.cn",
   "license": "MIT",
   "dependencies": {
+    "antd": "^3.26.20",
     "codemirror": "^5.46.0",
     "intersection-observer": "^0.12.0",
     "js-beautify": "^1.13.13",

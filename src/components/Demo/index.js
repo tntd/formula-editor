@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
 import FormulaEdit from '../FormulaEdit';
+import en_US from "../../locale/en_US";
+import { merge } from "lodash";
+
+import { ConfigProvider } from "antd";
+import zh_CN from "../../locale/zh_CN";
 
 
 // const TYPE_MAP = {
@@ -67,11 +72,11 @@ const fieldList = [
 const typeKeyWords = ['αINT', 'αSTRING', 'αDOUBLE', 'αBOOLEAN', 'αDATETIME', 'αLONG', 'αENUM', 'αJSON'];
 
 const enCodeToCnExtraLogic = (enCode) => {
-    const regExp = new RegExp(`(${typeKeyWords.join('|')})`, 'g');
-    const cnCode = enCode.replace(regExp, () => {
-        return '';
-    });
-    return cnCode;
+  const regExp = new RegExp(`(${typeKeyWords.join('|')})`, 'g');
+  const cnCode = enCode.replace(regExp, () => {
+    return '';
+  });
+  return cnCode;
 };
 
 
@@ -98,40 +103,51 @@ export default props => {
     setTimeout(() => {
       setList1(methodList)
     }, 1000);
-    return () => {}
+    return () => { }
   }, [])
 
 
   return (
     <>
-      <FormulaEdit
-        ref={formulaRef}
-        placeholder="return a+b"
-        value={code} //传入组件自动转化成cnCode*/
-        fieldList={list} // @唤起
-        // regRxp="@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*" //中文转英文默认正则
-        methodList={list1} // @唤起
-        onChange={(enCode, data) => {
-          console.log(data)
-          console.log('onChange---------1')
-          setCode(enCode);
-        }} // 回调
-        normalList={normalList}
-        editorEvent={(event) => {
-          formulaRef.current = event;
-        }}
+      <ConfigProvider locale={merge(zh_CN, {
+        TNTDFormulaEdit: {
+          formulaedit: {
+            index: {
+              cunZaiCuoWuDai: 123
+            }
+          }
+        }
+      })}>
+        <FormulaEdit
+          ref={formulaRef}
+          placeholder="return a+b"
+          value={code} //传入组件自动转化成cnCode*/
+          fieldList={list} // @唤起
+          // regRxp="@[^\\+\\*\\/#%\\(\\),;\\!\\<\\>\\-=@]*" //中文转英文默认正则
+          methodList={list1} // @唤起
+          onChange={(enCode, data) => {
+            console.log(data)
+            console.log('onChange---------1')
+            setCode(enCode);
+          }} // 回调
+          normalList={normalList}
+          editorEvent={(event) => {
+            formulaRef.current = event;
+          }}
 
-        // cnCodeToEnExtraLogic={(item) => {
-        //     return `α${item.type}`;
-        // }}
-        // enCodeToCnExtraLogic={enCodeToCnExtraLogic}
+          // cnCodeToEnExtraLogic={(item) => {
+          //     return `α${item.type}`;
+          // }}
+          // enCodeToCnExtraLogic={enCodeToCnExtraLogic}
 
-        // defaultValue={defaultCode} // 初始化值 去除该属性
-        // readOnly={false} // 是否只读 默认false
-        // lineNumber={true} // 是否显示列数 默认true
-        // theme="night" // 主题 默认night
-        height={height} // 高度 默认300
-      />
+          // defaultValue={defaultCode} // 初始化值 去除该属性
+          // readOnly={false} // 是否只读 默认false
+          // lineNumber={true} // 是否显示列数 默认true
+          // theme="night" // 主题 默认night
+          height={height} // 高度 默认300
+        />
+      </ConfigProvider>
+
       {/* <FormulaEdit
         placeholder="87878778"
         value={code} //传入组件自动转化成cnCode

@@ -8,7 +8,7 @@ import { getTypeMap } from './otp';
 const firstItemClass = 'li-first',
   lastItemClass = 'li-last';
 const ScrollContainer = (props) => {
-  const { style, dropList, theme, selectChange, listLen, listSize, itemHeight, typeMap, lang, domId } = props;
+  const { style, dropList, theme, selectChange, listLen, listSize, itemHeight, typeMap, lang, domId, I18N } = props;
   const halfListSize = Math.floor(listSize / 2);
   let box = null,
     intersectionObserver = null,
@@ -17,8 +17,8 @@ const ScrollContainer = (props) => {
     firstItem = null,
     lastItem = null,
     lastScrollTop = 0;
-
-  const TYPE_MAP = getTypeMap(lang);
+  debugger
+  const TYPE_MAP = getTypeMap(I18N);
 
   useEffect(() => {
     window.currentIndex = currentIndex;
