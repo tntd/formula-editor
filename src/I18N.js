@@ -1,6 +1,7 @@
 import React from 'react';
 import Cookies from 'universal-cookie';
 import zhCN from '../.octopus/zh-CN';
+import zhTW from '../.octopus/zh-TW';
 import enUS from '../.octopus/en-US';
 import thTH from '../.octopus/th-TH';
 import arEG from '../.octopus/ar-EG';
@@ -11,6 +12,7 @@ const cookies = new Cookies();
 
 const mapLocale = {
     'zh-cn': zhCN,
+    'zh-tw': zhTW,
     en: enUS,
     th: thTH, // 泰语
     ar: arEG, // 阿拉伯语（埃及）
@@ -28,9 +30,7 @@ export const WrapLocaleReceiver = (Component) => {
     return (props) => (
         <LocaleReceiver componentName="TNTDFormulaEdit">
             {(locale, localeCode) => {
-                console.log(locale, localeCode)
                 const I18N = !!Object.keys(locale).length ? locale : (mapLocale[localeCode] || mapLocale[getLang()]);
-                debugger
                 const transformLocaleCode = localeCode === 'zh-cn' ? 'cn' : localeCode;
                 return (
                     <Component locale={locale} localeCode={transformLocaleCode} I18N={I18N} {...props} />

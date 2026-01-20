@@ -17,7 +17,6 @@ const ScrollContainer = (props) => {
     firstItem = null,
     lastItem = null,
     lastScrollTop = 0;
-  debugger
   const TYPE_MAP = getTypeMap(I18N);
 
   useEffect(() => {
